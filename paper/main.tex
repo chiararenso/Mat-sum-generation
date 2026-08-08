@@ -61,7 +61,7 @@ is available for estimating the generative model.
 Most work on synthetic mobility addresses this problem primarily in geometric space. Trajectories are represented as coordinates, grid
 cells, spatial clusters, or nodes in a mobility graph, and the generator
 learns how users move between those spatial units
-\cite{mobilitySurvey,feng2020,gursoy2018}.
+\cite{feng2020,gursoy2018}.
 This representation is natural when the objective is geometric fidelity, but it is less suited to applications in which the relevant information is semantic: whether an individual visits a residential area, a
 restaurant, a transport facility, a park, or another meaningful urban context. Moreover, the representation itself determines the alphabet
 over which a generative model must learn transitions. A state space constructed solely from geometry may therefore be unnecessarily sparse or heterogeneous when the target structure is semantic.
@@ -227,7 +227,7 @@ is thus a data-driven, semantically-rich generator that is privacy-aware.
 A recent work ~\cite{kavalionak2026} tackles the same problem of data-driven mobility data generation 
 but from a complementary angle. Their approach abstracts movement by spatially clustering GPS points into regions, builds a weighted mobility graph, and generates a second-order Markov random walk
 projected onto the road network by a routing engine. Two differences delimit our contribution.
-First, the abstraction in \cite{avalionak2026} is spatial rather than semantic: nodes are geometric clusters, yielding a geometric trace, whereas our approach abstracts away from the geometric facets and preserves the underlying semantics. Second, and more importantly, the evaluation targets are orthogonal: \cite{kavalionak2026} assess population-level
+First, the abstraction in \cite{kavalionak2026} is spatial rather than semantic: nodes are geometric clusters, yielding a geometric trace, whereas our approach abstracts away from the geometric facets and preserves the underlying semantics. Second, and more importantly, the evaluation targets are orthogonal: \cite{kavalionak2026} assess population-level
 spatial fidelity via grid-density distances (MSE, JSD, EMD, PCC) and graph-structural metrics, excluding trajectory-level (individual) similarity. 
 Our evaluation is the mirror image: we measure
 semantic fidelity ($n$-gram and MUITAS distances) and place individual-level privacy at the center (distance-to-closest-record, copy rate, $\varepsilon$-DP). The same quantity, the closeness of a synthetic trace to a real individual, is what we explicitly penalize. The two works are thus complementary views:
@@ -1084,6 +1084,7 @@ Under an identical segmented log-$n$ fit the Paris saturation point is $n^\star{
 the datasets differ in the \emph{magnitude} of the pre-plateau gain, not in where quality saturates.
 
 \subsection{RQ3 - Generator capacity and privacy–fidelity trade-off}
+\label{sec:rq3}
 
 RQ3 asks whether, at a fixed \textsc{MAT-Sum} representation, increasing generator capacity buys better semantic fidelity, and at what disclosure cost. We compare two generators: the order-1 Markov and a small LSTM language model over the same per-sample symbol vocabulary holding everything else identical: the same nested paired user samples as RQ2
 ($D_{20}\!\subset\!D_{50}\!\subset\!D_{100}\!\subset\!D_{300}\!\subset\!D_{581}$, 20 replicates),
@@ -1475,6 +1476,7 @@ Approach for Urban Trajectory Generation. \emph{MuseKDE Workshop}, IEEE Internat
 \bibitem{pugliese2023} C.~Pugliese, F.~Lettich, F.~Pinelli, C.~Renso. Summarizing Trajectories Using Semantically Enriched Geographical Context (MAT-Sum). \emph{ACM SIGSPATIAL}, 2023.
 \bibitem{pugliese2025} C.~Pugliese, F.~Lettich, G.~Rocchietti, C.~Renso, F.~Pinelli. Human Mobility Datasets Enriched With Contextual and Social Dimensions. \emph{arXiv:2510.02333}; Zenodo 15658129, 2025.
 \bibitem{privtrace} H.~Wang, Z.~Zhang, et al. PrivTrace: Differentially Private Trajectory Synthesis by Adaptive Markov Models. \emph{USENIX Security}, 2023.
+\bibitem{wang2024stdifftraj} B.~Wang, J.~Yu, J.~Han, and S.~Qiu. ST-DiffTraj: A Spatiotemporal-Aware Diffusion Model for Trajectory Generation. In \emph{Proc.\ 7th Int.\ Conf.\ on Algorithms, Computing and Artificial Intelligence (ACAI)}, 2024.
 \bibitem{rao2020} J.~Rao, S.~Gao, et al. LSTM-TrajGAN: A Deep Learning Approach to Trajectory Privacy Protection. \emph{GIScience}, 2020.
 \bibitem{song2010} C.~Song, T.~Koren, P.~Wang, A.-L.~Barab\'asi. Modelling the Scaling Properties of Human Mobility (EPR). \emph{Nature Physics}, 2010.
 \bibitem{spaccapietra2008} S.~Spaccapietra, C.~Parent, et al. A Conceptual View on Trajectories. \emph{Data \& Knowledge Engineering}, 2008.
