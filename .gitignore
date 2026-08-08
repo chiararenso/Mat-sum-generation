@@ -1,0 +1,39 @@
+# ============================================================================
+# Confidential third-party data (Akkodis) — NEVER commit. Kept out of the repo.
+# ============================================================================
+data (AKKODIS)/
+/output/                # Akkodis pipeline outputs (derived from confidential GPS)
+/maps/                  # per-trajectory Folium maps of Akkodis trajectories
+/figures/               # local figure dump (Akkodis-mixed); committed figures live in paper/figures/
+*.html                  # generated reports may embed confidential data
+
+# ============================================================================
+# Large / regenerable data — reproducible from the public sources via the code
+# ============================================================================
+*.parquet
+*.pbf
+*.osm
+*.zip
+*.plt
+*.npz
+val_paris/output/*.parquet
+val_paris/figures/
+geolife/                # local GeoLife working dir (public, but large & regenerable)
+osm_pbf/
+
+# Allow the small public label maps and the small result CSVs
+!data/labeled_OSM_category.csv
+!data/pois_categories_OSM.txt
+
+# ============================================================================
+# Environment / caches / OS junk
+# ============================================================================
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+matsum-venv/
+.DS_Store
+.ipynb_checkpoints/
+*.log

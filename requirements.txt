@@ -1,0 +1,20 @@
+# Core scientific stack (Python 3.12)
+numpy==2.5.1
+pandas==3.0.5
+scipy==1.18.0
+scikit-learn==1.9.0
+matplotlib==3.11.1
+pyarrow==25.0.0
+
+# Geospatial
+geopandas==1.1.4
+shapely==2.1.2
+pyproj==3.7.2
+mercantile==1.2.1
+pyrosm==0.13.1          # offline OSM .pbf enrichment (map preparation only)
+
+# Deep generator (RQ3 / E3 only)
+torch==2.13.0
+
+# Optional: interactive maps (matsum_visualize.py)
+# folium

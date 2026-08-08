@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 486" font-family="DejaVu Sans, Verdana, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="7.5" refY="4" orient="auto">
+      <path d="M0,0 L9,4 L0,8 z" fill="#5c6b7a"/>
+    </marker>
+    <marker id="arT" markerWidth="10" markerHeight="10" refX="7.5" refY="4" orient="auto">
+      <path d="M0,0 L9,4 L0,8 z" fill="#1f7ab0"/>
+    </marker>
+  </defs>
+  <style>
+    .box{stroke-width:1.6;rx:13;}
+    .t{font-size:15px;font-weight:700;fill:#1b2432;}
+    .s{font-size:12px;fill:#5c6b7a;}
+    .ph{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+    .flow{stroke:#5c6b7a;stroke-width:1.8;fill:none;}
+    .flowT{stroke:#1f7ab0;stroke-width:2.2;fill:none;}
+    .chip{font-size:11px;font-weight:600;}
+    .zone{font-size:11px;font-weight:700;letter-spacing:.05em;}
+  </style>
+
+  <text x="530" y="30" text-anchor="middle" font-size="18" font-weight="800" fill="#1b2432">From MAT-Sum to synthetic MATs — methodology</text>
+
+  <!-- ===================== TOP BAND (semantic, preserved) ===================== -->
+  <!-- A raw GPS -->
+  <rect class="box" x="32" y="60" width="150" height="110" rx="13" fill="#ffffff" stroke="#98a6b5"/>
+  <text class="ph" x="107" y="84" text-anchor="middle" fill="#5c6b7a">input</text>
+  <text class="t" x="107" y="108" text-anchor="middle">Raw GPS</text>
+  <text class="t" x="107" y="126" text-anchor="middle">trajectories</text>
+  <text class="s" x="107" y="148" text-anchor="middle">points · timestamps</text>
+
+  <!-- B MAT-Sum -->
+  <rect class="box" x="206" y="60" width="212" height="110" rx="13" fill="#e6f0f7" stroke="#1f7ab0"/>
+  <text class="ph" x="312" y="84" text-anchor="middle" fill="#1f7ab0">reused as-is</text>
+  <text class="t" x="312" y="108" text-anchor="middle">MAT-Sum enrichment</text>
+  <text class="s" x="312" y="130" text-anchor="middle">tessellate · OSM aspects ·</text>
+  <text class="s" x="312" y="146" text-anchor="middle">merge into semantic locations</text>
+
+  <!-- C Phase 0 vocabulary -->
+  <rect class="box" x="442" y="60" width="212" height="110" rx="13" fill="#e6f0f7" stroke="#1f7ab0"/>
+  <text class="ph" x="548" y="84" text-anchor="middle" fill="#1f7ab0">phase 0</text>
+  <text class="t" x="548" y="108" text-anchor="middle">Anonymized</text>
+  <text class="t" x="548" y="126" text-anchor="middle">semantic vocabulary</text>
+  <text class="s" x="548" y="148" text-anchor="middle">top-m signature · k-anon merge</text>
+
+  <!-- dial pill under C -->
+  <rect x="470" y="180" width="156" height="26" rx="13" fill="#ece7f6" stroke="#6a53a6"/>
+  <circle cx="486" cy="193" r="7" fill="none" stroke="#6a53a6" stroke-width="1.6"/>
+  <line x1="486" y1="193" x2="490" y2="188" stroke="#6a53a6" stroke-width="1.6"/>
+  <text x="548" y="197" text-anchor="middle" class="chip" fill="#6a53a6">dial (m, k) ≈ τ</text>
+
+  <!-- D Phase 1 generator -->
+  <rect class="box" x="678" y="60" width="350" height="110" rx="13" fill="#e6f0f7" stroke="#1f7ab0"/>
+  <text class="ph" x="853" y="82" text-anchor="middle" fill="#1f7ab0">phase 1 · sequence generator</text>
+  <!-- model chips -->
+  <g>
+    <rect x="700" y="92" width="76" height="24" rx="12" fill="#ffffff" stroke="#6a53a6"/>
+    <text x="738" y="108" text-anchor="middle" class="chip" fill="#6a53a6">Markov</text>
+    <rect x="784" y="92" width="70" height="24" rx="12" fill="#ffffff" stroke="#6a53a6"/>
+    <text x="819" y="108" text-anchor="middle" class="chip" fill="#6a53a6">VOMM</text>
+    <rect x="862" y="92" width="64" height="24" rx="12" fill="#ffffff" stroke="#6a53a6"/>
+    <text x="894" y="108" text-anchor="middle" class="chip" fill="#6a53a6">LSTM</text>
+    <rect x="934" y="92" width="80" height="24" rx="12" fill="#ffffff" stroke="#6a53a6"/>
+    <text x="974" y="108" text-anchor="middle" class="chip" fill="#6a53a6">DP-Markov</text>
+  </g>
+  <text class="s" x="853" y="136" text-anchor="middle">+ empirical dwell-time · length model</text>
+  <path d="M752,150 L752,160 L761,155 z" fill="#2f7d4f"/>
+  <text class="s" x="857" y="156" text-anchor="middle" font-weight="700" fill="#1b2432">synthetic semantic sequences</text>
+
+  <!-- top flow arrows -->
+  <path class="flow" d="M182,115 L204,115" marker-end="url(#ar)"/>
+  <path class="flow" d="M418,115 L440,115" marker-end="url(#ar)"/>
+  <path class="flow" d="M654,115 L676,115" marker-end="url(#ar)"/>
+
+  <!-- ===================== ABSTRACTION LINE ===================== -->
+  <line x1="24" y1="248" x2="1036" y2="248" stroke="#1f7ab0" stroke-width="1.4" stroke-dasharray="7 5"/>
+  <text x="32" y="240" class="zone" fill="#1f7ab0">ABSTRACTION LINE</text>
+  <text x="1030" y="240" text-anchor="end" class="zone" fill="#2f7d4f">preserved above · semantics, coarse space &amp; time</text>
+  <text x="1030" y="266" text-anchor="end" class="zone" fill="#cf6a24">resampled below · exact geometry &amp; timing</text>
+
+  <!-- down arrow crossing the line -->
+  <path class="flowT" d="M853,170 L853,296" marker-end="url(#arT)"/>
+  <rect x="770" y="196" width="166" height="22" rx="11" fill="#ffffff" stroke="#1f7ab0"/>
+  <text x="853" y="211" text-anchor="middle" class="chip" fill="#1f7ab0">cross the abstraction line</text>
+
+  <!-- ===================== BOTTOM BAND (geometric, resampled) ===================== -->
+  <!-- E Phase 2-3 spatial -->
+  <rect class="box" x="678" y="300" width="350" height="112" rx="13" fill="#fbeadb" stroke="#cf6a24"/>
+  <text class="ph" x="853" y="322" text-anchor="middle" fill="#cf6a24">phase 2–3 · spatial instantiation</text>
+  <rect x="706" y="332" width="98" height="24" rx="12" fill="#ffffff" stroke="#cf6a24"/>
+  <text x="755" y="348" text-anchor="middle" class="chip" fill="#cf6a24">decoupled</text>
+  <rect x="814" y="332" width="118" height="24" rx="12" fill="#ffffff" stroke="#cf6a24"/>
+  <text x="873" y="348" text-anchor="middle" class="chip" fill="#cf6a24">coupled EPR</text>
+  <text class="s" x="853" y="376" text-anchor="middle">realize each symbol at a real tile</text>
+  <text class="s" x="853" y="394" text-anchor="middle">gravity · explore / return</text>
+
+  <!-- F OSRM -->
+  <rect class="box" x="442" y="300" width="212" height="112" rx="13" fill="#fbeadb" stroke="#cf6a24"/>
+  <text class="ph" x="548" y="322" text-anchor="middle" fill="#cf6a24">materialization</text>
+  <text class="t" x="548" y="348" text-anchor="middle">OSRM routing</text>
+  <text class="s" x="548" y="372" text-anchor="middle">road-consistent GPS geometry</text>
+  <text class="s" x="548" y="390" text-anchor="middle">plausible, never copied</text>
+
+  <!-- G output -->
+  <rect class="box" x="32" y="300" width="380" height="112" rx="13" fill="#e4f1ea" stroke="#2f7d4f"/>
+  <text class="ph" x="222" y="322" text-anchor="middle" fill="#2f7d4f">output</text>
+  <text class="t" x="222" y="348" text-anchor="middle">Synthetic MAT dataset</text>
+  <text class="s" x="222" y="372" text-anchor="middle">larger · privacy-preserving · shareable</text>
+  <text class="s" x="222" y="390" text-anchor="middle">no real trajectory reproduced</text>
+
+  <!-- bottom flow arrows (right → left) -->
+  <path class="flow" d="M678,356 L656,356" marker-end="url(#ar)"/>
+  <path class="flow" d="M442,356 L414,356" marker-end="url(#ar)"/>
+
+  <!-- ===================== EVALUATION FOOTER ===================== -->
+  <text x="32" y="452" class="ph" fill="#5c6b7a">evaluation</text>
+  <rect x="118" y="438" width="86" height="24" rx="12" fill="#e6f0f7" stroke="#1f7ab0"/>
+  <text x="161" y="454" text-anchor="middle" class="chip" fill="#1f7ab0">fidelity</text>
+  <rect x="212" y="438" width="82" height="24" rx="12" fill="#e4f1ea" stroke="#2f7d4f"/>
+  <text x="253" y="454" text-anchor="middle" class="chip" fill="#2f7d4f">utility</text>
+  <rect x="302" y="438" width="90" height="24" rx="12" fill="#ece7f6" stroke="#6a53a6"/>
+  <text x="347" y="454" text-anchor="middle" class="chip" fill="#6a53a6">privacy</text>
+  <text x="404" y="454" class="s">TV / MUITAS · TSTR · DCR, copies, ε-DP</text>
+</svg>

@@ -1,0 +1,4 @@
+method,generic_bigramTV_mean,generic_bigramTV_ci95,semantic_distortion_mean,semantic_distortion_ci95,semantic_genTV_mean,semantic_genTV_ci95,exact_copies_mean,exact_copies_ci95
+Grid-Markov,0.652,0.01,0.548,0.004,0.484,0.007,4.9,1.27
+Cluster-Markov,0.656,0.008,0.475,0.003,0.441,0.006,2.3,0.745
+MAT-Sum-Markov,0.363,0.005,0.282,0.003,0.276,0.004,0.05,0.105

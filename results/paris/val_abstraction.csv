@@ -1,0 +1,4 @@
+method,n_states,generic_bigramTV,semantic_distortion,semantic_genTV,exact_copies,semantic_states
+Grid-Markov,328,0.622,0.539,0.456,9,no
+Cluster-Markov,328,0.589,0.473,0.428,1,no
+MAT-Sum-Markov,328,0.321,0.277,0.269,0,yes

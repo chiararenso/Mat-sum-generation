@@ -1,0 +1,17 @@
+quantity,Paris (n=581),GeoLife (n=152)
+RQ1  MAT-Sum sem-gen-TV,0.276,0.266
+RQ1  best baseline sem-gen-TV,0.441 (Cluster-Markov),0.419 (Cluster)
+RQ1  relative improvement,37.4%,36.5%
+RQ2  sem-gen-TV  (min n -> max n),0.419 -> 0.270,0.273 -> 0.249
+RQ2  n range,20..581,10..152
+RQ2  relative TV reduction,35.6%,8.9%
+RQ2  saturation n* [95% CI],"50 [50,100]","75 [20,100]"
+RQ2  first n with dDCR>0,50,20
+RQ2  max exact-copy rate (/200),0.15 (0.07%),0.00 (0.00%)
+RQ3  Markov-LSTM sem-TV  @n=20,-0.062,-0.021
+RQ3  Markov-LSTM near-copy @n=20 (pp),-3.40,-6.05
+RQ3  Markov-LSTM dDCR    @n=20,+0.078,+0.062
+RQ3  LSTM near-copy peak @n=20,3.50%,6.47%
+RQ3  Markov-LSTM sem-TV  @n_max,-0.043,-0.044
+RQ3  Markov-LSTM near-copy @n_max(pp),+0.18,-0.68
+RQ3  Markov-LSTM dDCR    @n_max,+0.075,+0.013
