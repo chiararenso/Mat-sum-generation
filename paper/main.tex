@@ -933,7 +933,7 @@ count the grid produces $31.8$ exact session copies out of $200$ (short Beijing 
 and record structure.
 
 \begin{table*}[t]
-  \caption{E1 (GeoLife, $n{=}100$, 20 paired samples, $K_r{\approx}594$ matched states). Mean $\pm$
+  \caption{GeoLife (RQ1; $n{=}100$, 20 paired samples, $K_r{\approx}594$ matched states). Mean $\pm$
   95\% CI; TV$\downarrow$; copies out of $N{=}200$; near-copy at common-label MUITAS $\ge0.95$.}
   \label{tab:geolife-e1}
   \small
@@ -953,7 +953,7 @@ and record structure.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_geolife_e1.png}
-  \caption{E1 (GeoLife): role of the abstraction at matched state count ($K_r{\approx}594$),
+  \caption{GeoLife (RQ1): role of the abstraction at matched state count ($K_r{\approx}594$),
   $n{=}100$, 20 paired samples. \textbf{(A)}~native-state bigram TV; \textbf{(B)}~common-label-space
   TV (distortion, generation). \textsc{MAT-Sum} is significantly best in both spaces, replicating the
   Paris finding; whiskers are 95\% CIs.}
@@ -1045,7 +1045,7 @@ individuals are information-rich (a median of $30$ sessions and $\sim$1868 seman
 falls with $n$ while the synthetic distance holds.
 
 \begin{table*}[t]
-  \caption{E2 (GeoLife, MAT-Sum$+$Markov, 20 nested paired replicates). Mean $\pm$ 95\% CI;
+  \caption{GeoLife (RQ2; MAT-Sum$+$Markov, 20 nested paired replicates). Mean $\pm$ 95\% CI;
   $\Delta$DCR $=\mathrm{DCR}_{\text{synth}}-\mathrm{DCR}_{\text{base}}$ (user-aware); copies out of $200$.}
   \label{tab:geolife-e2}
   \small
@@ -1068,7 +1068,7 @@ falls with $n$ while the synthetic distance holds.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/fig_geolife_e2.png}
-  \caption{E2 (GeoLife) scaling, 20 nested paired replicates. \textbf{(A)}~semantic generation TV
+  \caption{GeoLife (RQ2) scaling, 20 nested paired replicates. \textbf{(A)}~semantic generation TV
   improves gently with $n$ (estimated saturation $n^\star\!\approx\!75$, dotted); \textbf{(B)}~user-aware
   DCR: synthetic$\to$training meets/exceeds the real-to-real baseline for $n\ge20$; \textbf{(C)}~exact
   session copies are $0$ throughout. Means $\pm$ 95\% CI.}
@@ -1211,7 +1211,7 @@ $\Delta$DCR---rather than a robust fidelity gain. For privacy-preserving synthes
 interpretable order-1 Markov is therefore the better operating point, externally confirming RQ3.
 
 \begin{table*}[t]
-  \caption{E3 (GeoLife, Markov vs.\ LSTM, 20 nested paired replicates). Mean $\pm$ 95\% CI;
+  \caption{GeoLife (RQ3; Markov vs.\ LSTM, 20 nested paired replicates). Mean $\pm$ 95\% CI;
   near-copy $=\%$ synthetic with max training MUITAS $\ge0.95$; copies out of $200$;
   $\Delta$DCR user-aware. Best (privacy-relevant) value per $n$ in bold.}
   \label{tab:geolife-e3}
@@ -1239,7 +1239,7 @@ interpretable order-1 Markov is therefore the better operating point, externally
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/geolife_e3.png}
-  \caption{E3 (GeoLife) generator capacity, 20 nested paired replicates. \textbf{(A)}~first-order
+  \caption{GeoLife (RQ3) generator capacity, 20 nested paired replicates. \textbf{(A)}~first-order
   semantic fidelity (bigram TV): Markov lower at every $n$, gap widening; \textbf{(B)}~near-copy
   disclosure: the LSTM leaks markedly at small $n$; \textbf{(C)}~user-aware $\Delta$DCR: Markov
   positive throughout, the LSTM negative at $n{=}20$. Means $\pm$ 95\% CI.}
