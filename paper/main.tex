@@ -710,10 +710,12 @@ Section~\ref{sec:experiments}).
 \end{table}
 
 As an illustration, one real Paris record (8 visits, after run-length collapsing)
-reads as an ordered sequence of multi-aspect semantic locations with dwell times:
+reads as an ordered sequence of semantic locations with dwell times:
+
 
 \begin{center}\small\ttfamily
 \begin{tabular}{@{}l l r@{}}
+\hline
 sport         & \{leisure, sport\}            & 10 min \\
 commercial    & \{commercial, leisure\}       & \ 1 min \\
 sport         & \{leisure, sport\}            & \ 4 min \\
@@ -722,6 +724,7 @@ sport         & \{leisure, sport\}            & \ 3 min \\
 tram          & \{bus, tram\}                 & \ 2 min \\
 bus           & \{bus, commercial\}           & \ 6 min \\
 accommodation & \{accommodation, commercial\} & 32 s   \\
+\hline
 \end{tabular}
 \end{center}
 
@@ -1270,10 +1273,8 @@ After answering the three design questions, we step back and ask whether the res
 
 \subsection{Utility: train-on-synthetic, test-on-real (TSTR)}
 \label{sec:tstr}
-To close the utility leg of the triad we evaluate a downstream task, next-semantic-label prediction in the fixed OSM-label space. For this release-level audit we use the MAT-Sum+order-1 Markov synthetic data from RQ2. A fixed 20\% of individuals is held out as a real test
-set; a predictor is fit either on the real training individuals (TRTR, upper bound) or on the
-synthetic data (TSTR), and scored as top-1 accuracy on the real test set. A majority-label
-predictor is the lower bound. We report the utility retained,
+To close the utility leg of the triad, we evaluate a downstream task, next-semantic-label prediction in the fixed OSM-label space. For this release-level audit, we use the MAT-Sum+order-1 Markov synthetic data from RQ2. A fixed 20\% of individuals is held out as a real test set; a predictor is fit either on the real training individuals (TRTR, upper bound) or on the
+synthetic data (TSTR), and scored as top-1 accuracy on the real test set. A majority-label predictor is the lower bound. We report the utility retained,
 $(\mathrm{TSTR}-\mathrm{base})/(\mathrm{TRTR}-\mathrm{base})$, for an order-1 and an order-2
 predictor (Table~\ref{tab:tstr}, Figure~\ref{fig:tstr}). The synthetic data retains
 $\approx\!80\%$ of the first-order predictive signal at every $n$, providing direct evidence that
@@ -1281,6 +1282,35 @@ it supports a real analysis task and not merely distributional matching. The sec
 however, is largely lost ($\approx\!25\%$ retained): the memoryless generator cannot reproduce the
 higher-order structure that a second-order predictor exploits (real second-order accuracy nearly
 doubles the first-order one). This result shows that higher-order structure is relevant to downstream utility and helps interpret the trigram advantage observed for the LSTM in RQ3. We do not claim here that the LSTM's higher-order fidelity directly translates into improved TSTR utility, since this TSTR experiment evaluates the Markov-generated release rather than a Markov-LSTM utility comparison.
+
+
+\begin{table}[t]
+  \caption{TSTR on Paris-OSM: next-label top-1 accuracy on a held-out real test set (mean over
+  20 replicates). ``retained'' $=(\mathrm{TSTR}-\mathrm{base})/(\mathrm{TRTR}-\mathrm{base})$.}
+  \label{tab:tstr}
+  \small
+  \begin{tabular}{@{}rccccccc@{}}
+    \toprule
+     & & \multicolumn{3}{c}{order-1} & \multicolumn{2}{c}{order-2} \\
+    \cmidrule(lr){3-5}\cmidrule(lr){6-7}
+    $n$ & base & TRTR & TSTR & retained & TRTR & TSTR/ret. \\
+    \midrule
+    20  & 0.144 & 0.195 & 0.182 & $0.81$ & 0.323 & $0.30$ \\
+    50  & 0.145 & 0.210 & 0.195 & $0.82$ & 0.388 & $0.26$ \\
+    100 & 0.144 & 0.219 & 0.202 & $0.79$ & 0.424 & $0.25$ \\
+    300 & 0.143 & 0.229 & 0.213 & $0.82$ & 0.465 & $0.27$ \\
+    465 & 0.143 & 0.231 & 0.217 & $0.84$ & 0.473 & $0.25$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\columnwidth]{figures/paris_tstr.png}
+  \caption{TSTR utility on Paris-581. (A) next-label accuracy: TSTR tracks TRTR well above the
+  majority baseline (order-1). (B) utility retained: $\approx\!80\%$ at order-1, $\approx\!25\%$
+  at order-2. Means $\pm$ 95\% CI.}
+  \label{fig:tstr}
+\end{figure}
 
 \subsection{Aggregate geographic utility without individual GPS reconstruction}
 
@@ -1322,33 +1352,6 @@ function-level spatial analyses are therefore available from the semantic output
 individual GPS geometry is deliberately not reconstructed.
 
 
-\begin{table}[t]
-  \caption{TSTR on Paris-OSM: next-label top-1 accuracy on a held-out real test set (mean over
-  20 replicates). ``retained'' $=(\mathrm{TSTR}-\mathrm{base})/(\mathrm{TRTR}-\mathrm{base})$.}
-  \label{tab:tstr}
-  \small
-  \begin{tabular}{@{}rccccccc@{}}
-    \toprule
-     & & \multicolumn{3}{c}{order-1} & \multicolumn{2}{c}{order-2} \\
-    \cmidrule(lr){3-5}\cmidrule(lr){6-7}
-    $n$ & base & TRTR & TSTR & retained & TRTR & TSTR/ret. \\
-    \midrule
-    20  & 0.144 & 0.195 & 0.182 & $0.81$ & 0.323 & $0.30$ \\
-    50  & 0.145 & 0.210 & 0.195 & $0.82$ & 0.388 & $0.26$ \\
-    100 & 0.144 & 0.219 & 0.202 & $0.79$ & 0.424 & $0.25$ \\
-    300 & 0.143 & 0.229 & 0.213 & $0.82$ & 0.465 & $0.27$ \\
-    465 & 0.143 & 0.231 & 0.217 & $0.84$ & 0.473 & $0.25$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\begin{figure}[t]\centering
-  \includegraphics[width=\columnwidth]{figures/paris_tstr.png}
-  \caption{TSTR utility on Paris-581. (A) next-label accuracy: TSTR tracks TRTR well above the
-  majority baseline (order-1). (B) utility retained: $\approx\!80\%$ at order-1, $\approx\!25\%$
-  at order-2. Means $\pm$ 95\% CI.}
-  \label{fig:tstr}
-\end{figure}
 
 \subsection{Worst-case disclosure: near-copy threshold sweep and DCR tail}
 \label{sec:disclosure-tail}
@@ -1384,13 +1387,18 @@ negative $\Delta$DCR reported there.
 \subsection{Privacy analysis: membership inference and unicity}
 \label{sec:privacy-attacks}
 Beyond the copy/DCR measures, we complete the privacy triad with a membership-inference attack and a
-unicity analysis. \textbf{Membership inference.} We mount the standard distance-to-closest-record
-attack against the released synthetic set: a candidate real record $x$ is scored by
+unicity analysis. 
+
+
+\textbf{Membership inference.} We mount the standard distance-to-closest-record attack against the released synthetic set: a candidate real record $x$ is scored by
 $s(x)=\max_j \mathrm{MUITAS}(x,\tilde s_j)$ and predicted a training member when $s(x)$ is high. We
 report the ROC-AUC of separating true members (the $n$ training records) from a fixed held-out set of
-non-members (20\% of individuals on Paris, of users on GeoLife), and the TPR at $10\%$ FPR
-(Table~\ref{tab:mia}, Figure~\ref{fig:mia}). The attack shows only a weak membership signal in the smallest Paris regime ($n{=}20$: AUC $0.547$, TPR@10\% $0.134$). From $n{=}50$ onward on Paris, and across the evaluated GeoLife regimes, performance is near chance or below it, indicating no persistent membership advantage as the training population grows. This pattern is consistent with the mildly negative $\Delta$DCR observed in the smallest-data regimes. This is a black-box distance attack; a shadow-model attack is left
-to future work. \textbf{Unicity.} Following the ``unique in the crowd'' methodology in the semantic
+non-members (20\% of individuals in Paris, of users in GeoLife), and the TPR at $10\%$ FPR
+(Table~\ref{tab:mia}, Figure~\ref{fig:mia}). 
+
+The attack shows only a weak membership signal in the smallest Paris regime ($n{=}20$: AUC $0.547$, TPR@10\% $0.134$). From $n{=}50$ onward in Paris, and across the evaluated GeoLife regimes, performance is near chance or below it, indicating no persistent membership advantage as the training population grows. This pattern is consistent with the mildly negative $\Delta$DCR observed in the smallest-data regimes. This is a black-box distance attack and a shadow-model attack is left to future work. 
+
+\textbf{Unicity.} Following the ``unique in the crowd'' methodology in the semantic
 space, we draw $k$ labels from a record and call it unique-at-$k$ when a single dataset record contains
 all $k$. Synthetic records are $10$--$20\times$ less identifiable than real ones (e.g.\ at $k{=}4$,
 $0.08\%$ vs.\ $1.5\%$ on Paris and $0.17\%$ vs.\ $2.1\%$ on GeoLife; Figure~\ref{fig:unicity}). Notably,
