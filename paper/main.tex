@@ -19,227 +19,211 @@
 \renewcommand{\shortauthors}{Draft v0.1}
 
 \begin{abstract}
-Sharing human-mobility data is difficult because trajectories are highly
-identifying, while many applications require semantic information about visited places in addition to geometry. We study whether semantic abstraction can improve synthetic mobility generation from small confidential datasets.
+Sharing human-mobility data is a widely debated issue because of the
+tension between the utility of such data for urban analysis and the
+need to preserve privacy and confidentiality. Public mobility datasets
+are relatively few, often sparse, and in some cases outdated, whereas
+richer and more recent data are typically held by service providers
+that may be reluctant to release them because of privacy, confidentiality,
+and data-ownership concerns. This has motivated growing interest in
+synthetic mobility generation.
 
-Our approach uses MAT-Sum to map mobility records to a compact vocabulary of semantic locations, generalizes poorly supported states,
-and learns sequence generators in this abstract space. We evaluate the role of the representation, the effect of training-set size, and the privacy-fidelity trade-off of generator capacity on two mobility datasets. 
+In this work, we address this problem from a semantic perspective.
+Rather than generating mobility directly in geographic space, we study
+whether a semantic abstraction can provide an effective representation
+for synthetic mobility generation. We also focus on the small-data
+setting, asking whether a limited confidential mobility dataset can be
+sufficient to generate a useful, privacy-aware synthetic surrogate.
 
-At matched state-space size and with the same order-1 Markov generator,
-MAT-Sum consistently outperforms grid and spatial-clustering
-representations in semantic fidelity. Increasing the number of training
-individuals improves generation quality while exact memorization remains
-negligible, although scaling depends on the amount of mobility data
-available per user. Finally, an LSTM captures higher-order sequential
-structure better, but is more closely associated with training records
-in the smallest-data regimes.
+Our approach uses a state-of-the-art semantic trajectory summarization
+method to construct the semantic representation on which generation
+takes place. We evaluate the role of the representation, the effect of
+training-set size, and the privacy/fidelity trade-off associated with
+generator capacity on two mobility datasets.
 
-These results show that semantic abstraction directly shapes both the
-learnability and empirical disclosure properties of synthetic mobility
-generation.
+Our results show that semantic abstraction produces a more learnable
+generative state space than matched geometric representations, remains
+effective in small-data regimes, and interacts with generator capacity
+through a clear privacy/fidelity trade-off. Overall, semantic
+abstraction directly shapes both the learnability and the empirical
+disclosure properties of synthetic mobility generation. 
+
 \end{abstract}
 
-\keywords{synthetic mobility data, multiple-aspect trajectories, trajectory privacy, semantic
-summarization, data sharing}
+\keywords{synthetic mobility data, semantic trajectories, trajectory privacy, semantic summarization, data sharing}
 
 \maketitle
 
 \section{Introduction}
 \label{sec:introduction}
 
-Human-mobility data support a wide range of analyses in transportation, urban planning, epidemiology, and behavioral modeling. At the same time, mobility records are notoriously difficult to share. Even after removing explicit identifiers, a trajectory may contain a sufficiently distinctive combination of places and times to be linked back to an
-individual. For organizations holding mobility data, releasing the original records is therefore often not an acceptable option.
+Human-mobility data support a wide range of applications in
+transportation, urban planning, epidemiology, and behavioral analysis.
+However, such data are difficult to share. Mobility records can be
+highly identifying even after explicit identifiers have been removed,
+while service providers may also be reluctant to release valuable
+proprietary datasets because of confidentiality and data-ownership
+concerns.
 
-Synthetic data offer an appealing alternative: instead of publishing the confidential records, the data owner learns a model of the
-population and releases newly generated trajectories. The difficulty is that a useful synthetic dataset must satisfy two competing objectives.
-It should preserve enough population structure to support meaningful
-analysis, while avoiding the reproduction of individual records from
-which the model was learned. This tension becomes particularly acute in
-the \emph{small-data regime}, where only a limited number of individuals
-is available for estimating the generative model.
+Synthetic mobility data offer a possible alternative: rather than
+releasing the original records, a data owner can learn from a
+confidential population and release newly generated trajectories that
+preserve relevant population-level properties. The challenge is to
+retain sufficient analytical utility without reproducing patterns that
+are specific to individual training records.
 
-Most work on synthetic mobility addresses this problem primarily in geometric space. Trajectories are represented as coordinates, grid
-cells, spatial clusters, or nodes in a mobility graph, and the generator
-learns how users move between those spatial units
-\cite{feng2020,gursoy2018}.
-This representation is natural when the objective is geometric fidelity, but it is less suited to applications in which the relevant information is semantic: whether an individual visits a residential area, a
-restaurant, a transport facility, a park, or another meaningful urban context. Moreover, the representation itself determines the alphabet
-over which a generative model must learn transitions. A state space constructed solely from geometry may therefore be unnecessarily sparse or heterogeneous when the target structure is semantic.
+Most synthetic mobility approaches address this problem primarily in
+geometric space, representing trajectories through coordinates, grid
+cells, spatial clusters, or mobility graphs~\cite{feng2020,gursoy2018}.
+This is natural when geometric fidelity is the main objective.
+However, many analyses are interested in the \emph{meaning} of visited
+places---for example, residential areas, transport facilities,
+commercial locations, or green spaces. In this setting, the
+representation is not merely an encoding choice: it defines the state
+space over which the generative model must learn mobility dynamics.
 
-This observation motivates a different perspective. We ask whether
-semantic abstraction can be used as the generative substrate itself, rather than treating semantics as an attribute reconstructed
-after generation. 
-We build on MAT-Sum~\cite{pugliese2023}, a
-location-centric summarization method for semantic trajectories.
-MAT-Sum enriches a geographic area with public semantic information and
-groups locations according to their semantic context. A mobility record
-can consequently be represented as an (ordered) sequence over a finite vocabulary of semantic locations.
+This observation motivates the central question of this work:
+\emph{can semantic abstraction itself provide the state space in which
+synthetic mobility is generated?}
+We build on MAT-Sum~\cite{pugliese2023}, a semantic trajectory
+summarization method that groups geographic areas according to their
+semantic context. We repurpose the resulting semantic locations as the
+states of the generative process. Each trajectory becomes an ordered
+sequence of visits to a finite semantic vocabulary, and generation is
+performed directly in this abstract space.
 
+Our target scenario is a data owner wishing to release a synthetic
+surrogate of a confidential mobility population while limiting the
+amount of raw data exposed to the synthesis process. This may reflect a
+data-minimization principle or, for example, the need to delegate
+generation without transferring the complete confidential collection.
+A smaller training sample is not assumed to be inherently more private:
+while it reduces raw-data exposure, too few individuals may make each
+training record more influential. We therefore explicitly study how
+training-set size affects both fidelity and empirical disclosure.
 
+The resulting framework is deliberately \emph{representation-first}.
+We study three design factors---representation, amount of confidential
+training data, and generator capacity---along two complementary
+dimensions. \emph{Semantic fidelity} measures whether the generated data
+preserve the mobility structure of interest, whereas
+\emph{empirical disclosure} measures exact reproduction or unusual
+proximity to individual training records. We do not claim a formal
+differential-privacy guarantee.
 
-We repurpose this representation for data-driven synthesis. Given a small confidential mobility dataset, can a data owner generate a shareable synthetic surrogate that preserves the semantic mobility patterns of that specific population? We investigate whether MAT-Sum can provide the semantic representation on which such a data-driven generator can be built.
-Starting from a (small and confidential) mobility sample, we construct a semantic vocabulary, generalize poorly supported states, and learn a sequence model over the
-resulting alphabet. The public map and its semantic labels provide a fixed external reference, whereas the generative vocabulary is learned only from the individuals available in the confidential sample. This
-separation is important: it allows us to distinguish what is lost by the
-abstraction from what is lost by the generator, and to compare different
-representations in the same semantic label space.
-
-Our hypothesis is that the abstraction is not neutral. A representation
-that groups observations according to meaning may produce a smaller and
-more coherent transition problem than a purely geometric partition of
-comparable size. If so, a simple generative model may reproduce
-population-level semantic structure with less dependence on individual
-training sequences. Conversely, increasing model capacity may recover
-additional sequential dependencies, but may also increase the tendency
-to reproduce patterns specific to the training population. The relevant
-design question is therefore not simply which generator has the lowest
-distributional error, but how representation, sample size, and
-generator capacity jointly determine fidelity and empirical disclosure.
-
-We investigate this question through three controlled research
-questions. First, we isolate the role of the representation by comparing
-MAT-Sum with grid and spatial-clustering abstractions under the same
-state-space budget and the same order-1 Markov generator. Second, we fix
-MAT-Sum and study how semantic fidelity and record-level disclosure
-change as the number of available training individuals increases.
-Third, we hold the semantic representation fixed and compare an order-1
-Markov model with a higher-capacity LSTM, measuring both first- and
-higher-order semantic fidelity together with proximity to the training
-records.
-
-The evaluation is performed on two substantially different mobility
-datasets. Paris-OSM contains one aggregated trajectory for each of 581
-de-identified contributors, whereas GeoLife contains multiple GPS
-sessions per user and provides a second urban setting, collection
-process, and data regime. In both cases, individuals define the sampling and privacy unit. 
-%We evaluate
-%generation quality in a common public OSM-label space and quantify
-%empirical disclosure through exact copies, near copies, and
-%distance-to-closest-record relative to a real-to-real baseline.
-
-The experiments reveal three consistent findings. First, at matched
-state-space size and with the same generator, semantic abstraction
-provides a substantially more faithful generative representation than the geometric alternatives on both datasets. Second, increasing the number of available individuals improves semantic generation quality without increasing exact copying, but the shape of the scaling curve is dataset dependent: the gain is strong on Paris-OSM, whereas GeoLife is already informative at small population sizes because each individual
-contributes many sessions. Third, generator capacity produces a genuine
-privacy--fidelity trade-off. On both datasets the LSTM improves trigram fidelity, demonstrating better recovery of higher-order sequential
-structure, while the order-1 Markov achieves better bigram fidelity and
-a more favorable empirical disclosure profile, particularly when the
-training population is small.
-
-These results lead to a simple conclusion: for synthetic generation from small confidential mobility datasets, the design of the state  space can be at least as important as the capacity of the generator.
-Semantic abstraction reduces the complexity of the generative problem while retaining the information targeted by semantic mobility analysis. Additional model capacity should then be evaluated against the additional disclosure risk it introduces.
-
-Semantic construction does two things: unsurprisingly, it preserves semantics better; more interestingly, it also turns semantic mobility generation into an easier statistical learning problem.
-Across these questions, we evaluate generation along two complementary dimensions: semantic fidelity and empirical disclosure. The former asks whether the synthetic data preserves the mobility
-structure of interest; the latter asks whether this fidelity is obtained by reproducing or remaining unusually close to individual training
-records.
-
-%The main contributions of this work are therefore:
-
-%\begin{itemize}
- %   \item \textbf{Semantic abstraction as a generative representation.}
- %   We repurpose MAT-Sum from trajectory summarization to synthetic
-% mobility generation and introduce a minimum-support semantic vocabulary over which new mobility sequences can be sampled.
-
- %   \item \textbf{A controlled analysis of representation and data scale.}
-%    We disentangle abstraction from generation by comparing the semantic and
- %   geometric state spaces under matched state budgets, and characterize how semantic fidelity and empirical record-level disclosure evolve across small-data regimes.
-
- %   \item \textbf{An empirical characterization of the privacy-fidelity effect of generator capacity.}
- %   Holding the semantic representation fixed, we compare an interpretable order-1 Markov generator and an LSTM using both
- %   first and higher-order semantic fidelity together with exact-copy, near-copy, and distance-to-training measures.
-
-  %  \item \textbf{Cross-dataset validation.}
-  %  We validate the three findings on Paris-581 and GeoLife, two datasets
- %%   with different cities, collection processes, and numbers of mobility
- %   records per individual, showing which conclusions generalize and
- %   which scaling effects depend on the amount of information available
- %   per user.
-%\end{itemize}
-
-
-Given the discussion above, we propose three research questions.
-
-\vspace{-0.1cm}
+This leads to the following research questions:
 
 \begin{description}
-  \item[RQ1 — Role of the abstraction.] When generating semantically rich mobility data, what is gained by constructing the generative state space from semantics rather than geometry, in terms of both generative fidelity and record-level disclosure?
-  \item[RQ2 — Small-data scaling and memorization.] How do semantic fidelity and empirical record-level disclosure risk change as the number of individuals available in the confidential training set increases?
-  \item [RQ3 - Sequence generator and privacy–fidelity trade-off.] Under the same MAT-Sum representation, how do an order-1 Markov model and a higher-capacity LSTM compare in semantic fidelity and empirical record-level disclosure risk across data regimes?
+
+\item[\textbf{RQ1: Role of the abstraction.}]
+When generating semantically rich mobility data, what is gained by
+constructing the generative state space from semantics rather than
+geometry?
+
+\item[\textbf{RQ2: Small-data scaling and memorization.}]
+How do semantic fidelity and empirical record-level disclosure risk
+change as the number of individuals available in the confidential
+training set increases?
+
+\item[\textbf{RQ3: Sequence generator and privacy--fidelity trade-off.}]
+Under the same MAT-Sum representation, how do an order-1 Markov model
+and a higher-capacity LSTM compare in semantic fidelity and empirical
+record-level disclosure risk across data regimes?
+
 \end{description}
 
-Together, the three questions form a single line of evidence: we first ask whether semantics provide a better generative representation (RQ1), then whether this representation remains useful when only a small confidential population is available (RQ2), and finally whether increasing generator complexity is necessary once the semantic representation has been fixed (RQ3). In other words RQ1 asks "Does MAT-Sum help?", RQ2 asks "Does it still help with little data?" and RQ3 asks "Once we have it, do we need a complex generator?"
+We answer these questions through controlled experiments on two
+substantially different mobility datasets, Paris-OSM and GeoLife.
+RQ1 varies the representation while controlling state-space size and generator; RQ2 varies the number of training individuals; and RQ3 compares Markov and LSTM generators under the same MAT-Sum representation.
 
-%We operationalize learnability through native-state distributional fidelity, semantic fidelity in a fixed OSM-label space, and empirical disclosure risk through exact and near copies and distance to the closest training record.
+The results provide three main findings. First, semantic abstraction not only preserves semantic information better than matched geometric representations, as expected, but also produces a transition space that the same generator can reproduce more accurately. Second, useful semantic generation remains possible with small confidential samples,
+although the benefit of additional users depends on how much mobility information each individual contributes. Third, generator capacitymcreates a privacy/fidelity trade-off: the LSTM better captures higher-order sequential structure, while the order-1 Markov provides better first-order fidelity and a more conservative empirical disclosure profile when training data are scarce.
+
+Taken together, these results support a representation-first view of privacy-aware synthetic mobility generation. The main contribution is not a new sequence generator, but the demonstration that semantic
+abstraction can define an effective generative state space for small confidential mobility datasets: semantics not only describe the information to preserve, but also structure the space in which  generation takes place.
 
 
 \section{Background and Related Work}
 
-The current work spans mainly two research areas: semantic trajectories representation, and synthetic mobility data creation.
+The current work lies at the intersection of semantic trajectory
+representation, synthetic mobility generation, and privacy-aware
+mobility data release.
 
-
-\textbf{Semantic trajectories and summarization}
+\textbf{Semantic trajectories representation}
 Semantic trajectories enrich raw movement with semantic information \cite{spaccapietra2008} and their latest definition includes the enrichment of heterogeneous
-semantic aspects, bringing to the deifnition of the so-called Multiple Aspects Trajectories~\cite{bogorny2019}. These trajectories tend to be large in terms of not only the number of GPS points but also in terms of semantic heterogeneous features, which could be complex to represent and redundant when linked to each spatio-temporal point. 
-
-The approach proposed in MAT-Sum~\cite{pugliese2023} mitigates this limitation by adopting a
-\emph{location-centric} view. Here, the enrichment happens at the geographical location level, and the trajectories are enriched with the semantics of the underlying crossed area. Pratically, MAT-Sum tessellates an area, enriches tiles with the different semantic aspects (e.g. POIs, land use,
-public transport), merges the tiles with identical or similar semantic context into uniform semantic locations. Then it
-summarizes each trajectory as a weighted sest over them. The summarization capacity is quantified by a summarization rate
-($S_{\text{rate}}$) and a semantic quality preservation (MUITAS~\cite{petry2019}). We reuse \textsc{MAT-Sum} as-is for map enrichment and repurpose its output to generate synthetic, semantic-based mobility data.
+semantic aspects, bringing to the definition of the so-called Multiple Aspects Trajectories~\cite{bogorny2019}. These trajectories tend to be large not only in the number of GPS points but also in the number of heterogeneous semantic features, which can be complex to represent and redundant when linked to each spatio-temporal point. 
+The approach proposed in MAT-Sum~\cite{pugliese2023} mitigates this limitation by adopting a \emph{location-centric} view. Here, the enrichment happens at the geographical location level, and the trajectories are enriched with the semantics of the underlying crossed area. Practically, MAT-Sum tessellates an area, enriches tiles with the different semantic aspects (e.g. POIs, land use, public transport), merges the tiles with identical or similar semantic context into uniform semantic locations. Then it
+summarizes each trajectory as a weighted set over them. The summarization capacity is quantified by a summarization rate
+($S_{\text{rate}}$) and a semantic quality preservation (MUITAS~\cite{petry2019}). In this work, we retain the temporal order of visits to these semantic
+locations and use the resulting ordered semantic sequence as the
+representation on which generation takes place.
+We reuse MAT-Sum's location-centric semantic abstraction and
+repurpose the resulting semantic locations as the state space for
+synthetic mobility generation.
 
 \textbf{Synthetic Mobility Data }
-It is useful to distinguish two families of synthetic mobility data. Simulation-based (bottom-up) methods generate movement from behavioral rules like the recent agent-based patterns-of-life microsimulations~\cite{zuefle_pol}, traffic
-and activity-based simulators such as SUMO~\cite{krajzewicz2002}. 
-Here, the output reflects generic plausible behavior, and it is not a faithful surrogate of any specific real population. On the other hand, it is not subject to any privacy or confidentiality concerns.
+It is useful to distinguish two families of synthetic mobility data. Simulation-based (bottom-up) methods generate movement from behavioral rules like the recent agent-based patterns-of-life microsimulations~\cite{zuefle_pol}, or the most well known traffic and activity-based simulators such as SUMO~\cite{krajzewicz2002}. 
+In this line of approaches the output reflects generic plausible behavior, and it is not a faithful surrogate of any specific real population.
 
 The Data-driven (top-down) methods instead learn a model from a real dataset and sample new trajectories that reproduce and expand its structure.
-In this last field of mobility data generation, we have approaches based on mechanistic models where they reproduce empirical laws (visitation frequency, radius of gyration, jump length,
-waiting time) via exploration/preferential-return dynamics~\cite{song2010,pappalardo2018}. The advantage is that they are interpretable and data-efficient. Another line of data-driven generators is called deep generators~\cite{feng2020,rao2020,zhu2023} based on deep learning methods. They achieve higher
-geometric fidelity given large corpora, but they at the risk of memorization that could bring privacy issues~\cite{feng2020,rao2020,zhu2023,gursoy2018,pappalardo2018}. 
+In this last field of mobility data generation, we have approaches based on mechanistic models . These approaches reproduce empirical mobility regularities
+such as visitation frequency, radius of gyration, jump length, and waiting time through mechanisms such as exploration and preferential
+return~\cite{song2010,pappalardo2018}. Their main advantage is
+interpretability and the explicit modeling of mobility mechanisms. However, privacy protection is generally not their primary design objective and, when models are calibrated on confidential data, disclosure must be assessed separately.
+
+Another line of data-driven approaches uses deep generative
+models~\cite{feng2020,rao2020,zhu2023}. These models can capture
+complex spatio-temporal dependencies that are difficult to represent with simpler mobility models. However, because they are learned from individual trajectories, high generative fidelity alone does not imply privacy: dedicated privacy mechanisms or empirical disclosure
+evaluation are needed.
+
 More recently, diffusion models have emerged as a powerful alternative for data-driven synthetic mobility generation. DiffTraj~\cite{zhu2023difftraj}
-models GPS trajectories through a spatio-temporal diffusion process, reconstructing geographic trajectories from noise with a trajectory-specific
-denoising network. The same line of work led to SynMob~\cite{zhu2023synmob}, a publicly released synthetic GPS trajectory dataset designed to retain
+models GPS trajectories through a spatio-temporal diffusion process, reconstructing geographic trajectories from noise with a trajectory-specific denoising network. The same line of work led to SynMob~\cite{zhu2023synmob}, a publicly released synthetic GPS trajectory dataset designed to retain
 the geo-distribution and statistical properties of real mobility data.
-Subsequent approaches further incorporate mobility-specific structure: ST-DiffTraj~\cite{wang2024stdifftraj} explicitly models temporal and spatio-temporal dependencies during denoising, 
-%while
-%CoDiffMob~\cite{zhang2025codiffmob} introduces collaborative noise priors
-%to capture both individual mobility characteristics and population-level
-%movement patterns.
+Subsequent approaches further incorporate mobility-specific structure: ST-DiffTraj~\cite{wang2024stdifftraj} explicitly models temporal and spatio-temporal dependencies during denoising. 
 These approaches demonstrate the effectiveness of
 high-capacity diffusion models for reproducing complex mobility
 distributions. However, they mainly operate on geographic or spatio-temporal trajectory representations. 
-%In the field of privacy we have a line of differentially-private synthesizers~\cite{gursoy2018}.
-To our knowledge, generation of \emph{semantically rich} Multiple-Aspect Trajectories, and the use of
-a semantic summarization as the generative substrate, is largely unexplored and this is the gap we
-target.
+
+Recent work has begun to incorporate higher-level or semantic-aware representations into trajectory generation. However, the use of a semantic trajectory summarization as the data-dependent generative state space for producing a surrogate of a specific confidential population remains comparatively unexplored. In particular, the interaction between semantic representation, limited confidential training data, generator capacity, and empirical record-level disclosure has received little attention. This is the gap we target.
 
 Our work is based on the assumption that the objective of a data owner is to release a shareable surrogate of a specific confidential dataset. Under this hypothesis, we need to target the data-driven family. 
-But this is exactly why privacy is
-a live concern here: the generator ingests real individual trajectories, it can memorize and leak them. %Leakage must be measured rather than assumed away. 
-Our contribution
-is thus a data-driven, semantically-rich generator that is privacy-aware.
+But this is exactly why privacy is a live concern here: the generator ingests real individual trajectories, it can memorize and leak them. %Leakage must be measured rather than assumed away. 
+Our contribution is a representation-first framework for
+privacy-aware, data-driven semantic mobility synthesis, in which
+MAT-Sum defines the state space on which generation takes place.
+We additionally treat the amount of confidential training data as a
+design variable, asking whether a useful surrogate can be learned
+from a deliberately limited sample and how this choice affects
+empirical disclosure.
 
-%\paragraph{Closest work: spatial vs.\ semantic abstraction}
-A recent work ~\cite{kavalionak2026} tackles the same problem of data-driven mobility data generation 
-but from a complementary angle. Their approach abstracts movement by spatially clustering GPS points into regions, builds a weighted mobility graph, and generates a second-order Markov random walk
-projected onto the road network by a routing engine. Two differences delimit our contribution.
-First, the abstraction in \cite{kavalionak2026} is spatial rather than semantic: nodes are geometric clusters, yielding a geometric trace, whereas our approach abstracts away from the geometric facets and preserves the underlying semantics. Second, and more importantly, the evaluation targets are orthogonal: \cite{kavalionak2026} assess population-level
-spatial fidelity via grid-density distances (MSE, JSD, EMD, PCC) and graph-structural metrics, excluding trajectory-level (individual) similarity. 
-Our evaluation is the mirror image: we measure
-semantic fidelity ($n$-gram and MUITAS distances) and place individual-level privacy at the center (distance-to-closest-record, copy rate, membership inference, and unicity). The same quantity, the closeness of a synthetic trace to a real individual, is what we explicitly penalize. The two works are thus complementary views:
-spatial abstraction for aggregate fidelity, semantic abstraction for privacy-aware, semantically-rich generation.
+A recent work~\cite{kavalionak2026} addresses data-driven mobility generation from a complementary perspective. Their approach abstracts movement by spatially clustering GPS points into regions, constructs a weighted mobility graph, and generates trajectories through a second-order Markov random walk subsequently projected onto the road network.
+
+Two main differences characterize our contribution. First, their
+abstraction is primarily spatial: the generative states correspond to geometric regions, whereas MAT-Sum constructs the state space from contextual semantics. Second, the primary evaluation emphasis differs.
+Their work focuses on population-level spatial fidelity and
+graph-structural properties, whereas our controlled experiments focus on semantic fidelity and empirical individual-level disclosure.
+Specifically, semantic fidelity is evaluated through $n$-gram
+distributional distances, while disclosure is assessed through exact and near copies, MUITAS-based distance to the closest training record, membership inference, and unicity.
+
+Our release-level analysis additionally considers aggregate geographic
+utility, but without reconstructing individual GPS trajectories.
+The two approaches are therefore complementary: one emphasizes
+geometry-centered generation and aggregate spatial structure, whereas
+ours studies semantic representation as the generative substrate and
+its interaction with fidelity, limited confidential data, and
+individual-level disclosure.
 
 \section{Methodology}
 \label{sec:method}
 
 
-Our central design choice is to separate the representation used for
-generation from the sequence model that operates on it. Rather than learning directly from raw coordinates or geometric cells, we first map
-mobility observations to a finite semantic state space derived from MAT-Sum~\cite{pugliese2023}. MAT-Sum defines a finite set of semantic locations that constitutes the generative vocabulary. Each original trajectory is then represented here as an ordered, temporally weighted sequence of visits to these semantic
-locations. Our sequence models operate on these summarized trajectory representations rather than on raw GPS points.
-We then learn a sequence generator over this
-state space.
+Our central design choice is to separate the representation used
+for generation from the sequence model that operates on it.
+Rather than learning directly from raw coordinates or geometric cells,
+we first use MAT-Sum~\cite{pugliese2023} to construct a finite set of semantic locations. In the original MAT-Sum formulation, these locations are used to summarize each trajectory as a weighted set.
+For generation, we adapt this representation by retaining the temporal order in which a trajectory visits the MAT-Sum semantic locations.
+The resulting trajectory is therefore represented as an ordered,
+temporally weighted sequence of visits to a finite semantic vocabulary. Our sequence generators operate on these ordered semantic sequences rather than on the weighted-set representation used for summarization or on the original GPS points. We then learn a sequence generator over this state space.
 
 This separation allows us to study the three factors 
 addressed by our research questions independently: the effect of the abstraction (RQ1), the amount of private data available to estimate the model (RQ2), and the capacity of the sequence generator (RQ3).
@@ -273,7 +257,7 @@ The central design choice is to separate the semantic representation from the se
 
 Let $\mathcal{U}$ denote a set of individuals moving into a geographical space. An individual
 %$u \in \mathcal{U}$ 
-contributes one or more trajectories, that are 
+contributes one or more trajectories that are 
 %
 %\[
 %    \mathcal{D}_u =
@@ -314,78 +298,44 @@ vocabulary of semantic labels. This public label space is fixed within each stud
 \subsection{Semantic abstraction}
 \label{sec:semantic-abstraction}
 
-We use MAT-Sum~\cite{pugliese2023} to transform raw mobility observations into visits to semantically characterized locations. MAT-Sum tessellates the geographic area, enriches the resulting cells with semantic aspects, and groups cells that share a semantic context into semantic locations.
+We use MAT-Sum~\cite{pugliese2023} to construct the semantic locations that define our generative vocabulary. MAT-Sum tessellates the geographic area, enriches the resulting cells with semantic aspects, and groups cells sharing a semantic context into semantic locations.
 
-%For a semantic location $\ell$, let $\mathcal{A}(\ell)$ denote its set
-%of semantic aspects. We represent $\ell$ through a compact signature
-%obtained by retaining its top-$m$ TF--IDF-ranked aspects:
-%
-%\[
-%    \phi_m(\ell)
-%    =
-%    \operatorname{Top}_m\!\left(\mathcal{A}(\ell)\right).
-%\]
-%
-%The parameter $m$ therefore controls the semantic resolution of the
-%representation: smaller values produce coarser signatures and a smaller
-%state space, whereas larger values preserve finer semantic distinctions.
+The semantic aspects are drawn from a fixed, public OpenStreetMap taxonomy of about $65$ labels spanning
+four families: \emph{points of interest} (e.g.\ accommodation, food and beverages, retail, healthcare,
+education, office, leisure, cultural and historic attractions), \emph{land use} (residential, natural,
+water, farmland, industrial), \emph{public transport} (bus, train, tram, subway, rail stops and stations),
+and the \emph{road network} (pedestrian, cycle and motor roads). Each tile is described by the aspects
+present in it, ranked by TF--IDF; a semantic location retains its top-$m$ aspects as a compact
+multi-aspect \emph{signature}. For $m{=}2$, typical signatures are single- or two-aspect sets such as
+$\{\textsf{residential}\}$, $\{\textsf{accommodation}, \textsf{food\_and\_beverages}\}$,
+$\{\textsf{natural}, \textsf{residential}\}$ or $\{\textsf{bus}, \textsf{transportation}\}$. A trajectory
+is thus a sequence of such signatures with dwell times, e.g.\
+$\{\textsf{residential}\}\!\rightarrow\!\{\textsf{bus},\textsf{transportation}\}\!\rightarrow\!
+\{\textsf{accommodation},\textsf{food\_and\_beverages}\}\!\rightarrow\!\{\textsf{residential}\}$.
 
-Each raw trajectory is mapped to the corresponding sequence of semantic
-locations. Consecutive observations associated with the same semantic location
-are run-length collapsed into a single visit, while their elapsed time
-is accumulated as a dwell time. The resulting representation is
-%
+
+We then map each raw trajectory to the temporally ordered sequence of semantic locations it traverses. Consecutive observations associated with the same semantic location are run-length collapsed into a single visit, while their elapsed time is accumulated as dwell time.
+The resulting representation is
 \[
-    S_{u,r}
-    =
-    \bigl[
-        (z_1,\delta_1),\ldots,(z_L,\delta_L)
-    \bigr],
+S_{u,r} =
+\left[
+(z_1,\delta_1),\ldots,(z_L,\delta_L)
+\right],
 \]
-%
-where $z_i$ is a semantic state and $\delta_i$ its dwell time.
+where $z_i$ is a MAT-Sum semantic location and $\delta_i$ is the
+corresponding dwell time.
 
 \subsection{Minimum-support semantic vocabulary}
 \label{sec:vocabulary}
 
-As we are in the scenario where we ned to create data driven synthetic data from small 9confidential) datasets, we have to consider that a vocabulary built from a small sample may contain rare semantic contexts that are weakly supported and potentially identifying the individual.
-We therefore apply a minimum-support generalization controlled by a parameter $k$.
+As we are in the scenario where we need to create data driven synthetic data from possibly small  and confidential datasets.  We have to consider that a vocabulary built from a small sample may contain rare semantic contexts that are weakly supported and potentially identifying the individual.
 
-%Let
-%
-%\[
-%    \operatorname{supp}(z)
-%\]
-%
-%denote the number of occurrences of semantic state $z$ in the training
-%sample. States satisfying
-%
-%\[
-%    \operatorname{supp}(z) < k
-%\]
-%
-%are merged into a sufficiently supported state with the most similar
-%semantic signature. 
+The parameter $m$ controls the semantic resolution of the representation by retaining the $m$ most informative semantic aspects associated with each location. Smaller values produce coarser semantic states, whereas larger values distinguish more specific contexts and typically induce a larger generative vocabulary.
+The parameter $k$, instead, controls the minimum support required for a semantic state to remain in the vocabulary; states with insufficient support are generalized toward similar, better-supported states.
+We therefore apply a minimum-support generalization controlled by a parameter $k$.
 Similarity between two semantic locations is measured by
 their Jaccard similarity.
-%
-%\[
-%    J(z_i,z_j)
-%    =
- %   \frac{|z_i\cap z_j|}
- %        {|z_i\cup z_j|}.
-%\]
-%
-%Thus a rare state $z$ is mapped to
-%
-%\[
-%    z^{\star}
-%    =
-%    \arg\max_{
-%        z'\,:\,\operatorname{supp}(z')\geq k
-%    }
-%    J(z,z').
-%\]
+
 
 The resulting vocabulary is denoted by
 %
@@ -393,20 +343,16 @@ The resulting vocabulary is denoted by
     \mathcal{V}_{m,k}(\mathcal{D}).
 \]
 %
-A key property for the experiments in RQ2 and RQ3 is that this vocabulary is reconstructed from the individuals available in each training sample.
-Consequently, its effective cardinality may grow with the amount of training data. The public semantic map remains fixed; only the data-dependent vocabulary and the generative model are re-estimated.
+A key property of the experiments in RQ2 and RQ3 is that the vocabulary is reconstructed from the individuals present in each training sample.
+Consequently, its effective cardinality may grow with the amount of training data. The public semantic map remains fixed and only the data-dependent vocabulary and the generative model are re-estimated.
 
-Unless otherwise stated, the experiments use $m=2$ and $k=5$.
 
 \subsection{Sequence generation}
 \label{sec:generation}
 
 Given the semantic sequences induced by
 $\mathcal{V}_{m,k}(\mathcal{D})$, we model separately
-(i) sequence length, (ii) semantic-state transitions, and
-(iii) dwell times. This decoupling ensures that the comparison between different sequence generators changes the transition model while keeping the remaining components fixed.
-
-%\subsubsection{Order-1 Markov generator}
+(i) sequence length, (ii) semantic-state transitions, and (iii) dwell times. This decoupling ensures that the comparison between different sequence generators changes the transition model while keeping the remaining components fixed.
 
 Our main generator is a first-order Markov chain over the semantic vocabulary. Let
 %
@@ -414,9 +360,7 @@ Our main generator is a first-order Markov chain over the semantic vocabulary. L
     C_{ij}
 \]
 %
-be the number of observed transitions from state $i$ to state $j$ in
-the training sequences. With Laplace smoothing, the transition
-probability is
+be the number of observed transitions from state $i$ to state $j$ in the training sequences. With Laplace smoothing, the transition probability is
 %
 \[
     P(z_{t+1}=j \mid z_t=i)
@@ -435,15 +379,9 @@ The sequence length is sampled independently from the empirical distribution of 
 %
 has been generated, each visit receives a newly sampled dwell time associated with its semantic state.
 
-No transition is introduced across independent recording sessions.
-When a user contributes multiple sessions, transition counts are accumulated within sessions and the sequence model is reset at each session boundary.
+No transition is introduced across independent recording sessions. When a user contributes multiple sessions, transition counts are accumulated within sessions, and the sequence model is reset at each session boundary.
 
-% TODO: specify explicitly how the initial state of a synthetic
-% sequence is sampled (e.g., empirical initial-state distribution).
-
-%\subsubsection{LSTM generator}
-
-To study the effect of sequence-model capacity in RQ3, we use a lightweight LSTM as a higher-capacity alternative. The LSTM operates on
+To study the effect of sequence-model capacity in RQ3, we use a lightweight LSTM (Long Short Term Memory) as a higher-capacity alternative. The LSTM operates on
 the same data-dependent semantic vocabulary and estimates
 %
 \[
@@ -464,7 +402,6 @@ The architecture and training hyperparameters used in each dataset are reported 
 As stated in our RQ1, we want to isolate the effect of the representation. We therefore compare
 MAT-Sum with two purely geometric abstractions while holding the sequence generator and state-space budget fixed: the grid cells and the spatial clustering. 
 
-%\paragraph{Grid.}
 In the grid representation, the study area is discretized into spatial grid cells, and each visited cell becomes a sequence state.
 In the spatial clustering approach, the GPS observations are grouped through spatial $K$-means clustering, and the resulting clusters define the sequence states.
 
@@ -476,8 +413,7 @@ For every paired experimental sample, let
     |\mathcal{V}_{m,k}(\mathcal{D}^{(r)})|
 \]
 %
-be the effective number of MAT-Sum states. The geometric abstractions
-are configured to produce the same state-space budget $K_r$.
+be the effective number of MAT-Sum states. The geometric abstractions are configured to produce the same state-space budget $K_r$.
 All three representations are then coupled with the same order-1 Markov generator and the same sampling protocol.
 
 This controlled design makes the semantic abstraction the important factor in RQ1: differences cannot be attributed to a larger state space or a more expressive sequence generator.
@@ -485,14 +421,11 @@ This controlled design makes the semantic abstraction the important factor in RQ
 %\subsection{A common semantic evaluation space}
 %\label{sec:common-space}
 
-The three abstractions used to answer RQ1 have different native-state semantics. Moreover, in RQ2 and RQ3 the MAT-Sum vocabulary is rebuilt for each training sample and therefore changes with the number of available users. Direct comparison only in the native state spaces would consequently mix generation error with differences in the representation itself.
+The three abstractions used to answer RQ1 have different native-state semantics. Moreover, in RQ2 and RQ3, the MAT-Sum vocabulary is rebuilt for each training sample and therefore changes with the number of available users. Direct comparison only in the native state spaces would consequently mix generation error with differences in the representation itself.
 
-To evaluate the pipeline, we need to distinguish where information can be lost. First, the abstraction itself may discard semantic information. Second, the generator may fail to reproduce the dynamics of the abstracted trajectories. Finally, the combination of these two
-effects determines the semantic fidelity of the generated data.
+To evaluate the pipeline, we need to distinguish where information can be lost. First, the abstraction itself may discard semantic information. Second, the generator may fail to reproduce the dynamics of the abstracted trajectories. Finally, the combination of these two effects determines the semantic fidelity of the generated data.
 
-We therefore evaluate the process at three levels: native-state
-generation fidelity, abstraction distortion, and final semantic
-generation fidelity.
+We therefore evaluate the process at three levels: native-state generation fidelity, abstraction distortion, and final semantic generation fidelity.
 
 We therefore evaluate semantic fidelity in a common public OSM-label space $\mathcal{L}$. For each abstraction $A$, let
 %
@@ -519,7 +452,7 @@ denote the empirical distribution of contiguous $q$-grams. We measure the discre
 \]
 %
 where lower values indicate greater distributional fidelity.
-Total Variation distance is particularly well-suited to our setting because it quantifies how faithfully the synthetic data reproduce the empirical semantic transition distribution in a common, fixed label space.
+Total Variation distance is particularly well-suited to our setting because it quantifies how faithfully the synthetic data reproduces the empirical semantic transition distribution in a common, fixed label space.
 
 \subsubsection{Native-state generation fidelity}
 
@@ -539,8 +472,6 @@ where $\mathcal{D}_A$ and $\widetilde{\mathcal{D}}_A$ are respectively the real 
 Since the alphabet differs across abstractions, this metric is
 interpreted only as a within-representation generation error.
 
-%\subsubsection{Abstraction distortion}
-
 To quantify how much semantic information is lost before generation, we compare the real trajectories after abstraction and projection back to OSM labels with the original OSM-label reference:
 %
 \[
@@ -555,8 +486,6 @@ To quantify how much semantic information is lost before generation, we compare 
 
 This quantity isolates the distortion introduced by the abstraction itself, independently of the generator.
 
-%\subsubsection{Semantic generation fidelity}
-
 The final semantic-generation error is
 %
 \[
@@ -569,7 +498,7 @@ The final semantic-generation error is
     \right).
 \]
 
-For RQ1 and RQ2, the primary fidelity measure is the semantic bigram distance $D_{\mathrm{gen}}^{(2)}$. In RQ2, this fixed OSM-label space is particularly important because the native MAT-Sum vocabulary changes with sample size and native-state TV would therefore be measured against a moving alphabet.
+For RQ1 and RQ2, the primary fidelity measure is the semantic bigram distance $D_{\mathrm{gen}}^{(2)}$. In RQ2, this fixed OSM-label space is particularly important because the native MAT-Sum vocabulary changes with sample size, and native-state TV would therefore be measured against a moving alphabet.
 
 For RQ3 we report both
 %
@@ -584,16 +513,14 @@ The bigram metric measures first-order transition fidelity, whereas the trigram 
 \subsection{Empirical disclosure measures}
 \label{sec:privacy-metrics}
 
-Our privacy analysis is empirical rather than formal: we do not provide a differential-privacy guarantee. For RQ1--RQ3, we focus on record-level memorization and proximity to the training data through exact and near copies and distance to the closest record. 
+Our privacy analysis is empirical rather than formal: we do not provide a differential-privacy guarantee. For RQ1 to RQ3, we focus on record-level memorization, proximity to the training data via exact and near copies, and distance to the closest record. 
 Exact copies capture literal memorization; near copies capture almost reproduced trajectories; DCR asks whether a synthetic record is unusually close to any training individual.
 
 Section~\ref{sec:privacy-utility} complements these measures with a release-level utility analysis, a black-box membership-inference attack, and a unicity study.
 
 \subsubsection{Exact copies}
 
-A generated sequence is an exact copy if its complete semantic
-state sequence is identical to a sequence in the corresponding
-training set. For $N$ generated sequences,
+A generated sequence is an exact copy if its complete semantic state sequence is identical to a sequence in the corresponding training set. For $N$ generated sequences,
 %
 \[
     C_{\mathrm{exact}}
@@ -606,16 +533,12 @@ training set. For $N$ generated sequences,
     \right].
 \]
 %
-We report this quantity as the number of exact copies among
-$N=200$ generated sequences.
+We report this quantity as the number of exact copies among $N=200$ generated sequences.
 
-Since the sequence unit differs across datasets (an aggregated
-trajectory or a recording session), exact-copy counts are interpreted within each dataset rather than directly compared across datasets.
+Since the sequence unit differs across datasets (an aggregated trajectory or a recording session), exact-copy counts are interpreted within each dataset rather than directly compared across datasets.
 
-%\subsubsection{Near copies}
 Exact identity may miss synthetic sequences that reproduce almost all of a training record. We therefore use MUITAS~\cite{petry2019} as a
-semantic trajectory-similarity measure. For a generated sequence $s$,
-define
+semantic trajectory-similarity measure. For a generated sequence $s$, we define
 %
 \[
     q(s)
@@ -639,9 +562,6 @@ The near-copy rate is
     \sum_{s\in\widetilde{\mathcal{D}}}
     \mathbb{I}[q(s)\geq0.95].
 \]
-
-%\subsubsection{Distance to the closest real record}
-
 
 For each synthetic sequence $s$, we define its distance to a training individual $u$ as
 %
@@ -690,8 +610,7 @@ Finally, we report
     \operatorname{DCR}_{\mathrm{base}}.
 \]
 %
-A positive value means that, according to the chosen semantic
-similarity measure, synthetic records are on average farther from their closest training individual than real records are from other real individuals. A negative value indicates comparatively greater proximity to the training data.
+A positive value means that, according to the chosen semantic similarity measure, synthetic records are on average farther from their closest training individual than real records are from other real individuals. A negative value indicates comparatively greater proximity to the training data.
 
 \subsection{Experimental design}
 \label{sec:experimental-design}
@@ -699,8 +618,7 @@ similarity measure, synthetic records are on average farther from their closest 
 The three research questions are evaluated through controlled paired experiments.
 
 \paragraph{RQ1: role of the abstraction.}
-We vary the representation while controlling the generator and
-state-space budget. Grid, spatial clustering, and MAT-Sum are evaluated on the same user samples, with matched numbers of states and the same order-1 Markov generator. We report native-state bigram TV, common-label abstraction distortion, semantic generation TV, and copy-based disclosure measures.
+In this experiment we vary the representation while controlling the generator and state-space budget. Grid, spatial clustering, and MAT-Sum are evaluated on the same user samples, with matched numbers of states and the same order-1 Markov generator. We report native-state bigram TV, common-label abstraction distortion, semantic generation TV, and copy-based disclosure measures.
 
 \paragraph{RQ2: small-data scaling.}
 We fix MAT-Sum and the order-1 Markov generator and vary the number of training individuals. Within each replicate, user samples are nested,
@@ -712,34 +630,28 @@ We fix MAT-Sum and the order-1 Markov generator and vary the number of training 
     \subset \cdots,
 \]
 %
-so that changes along the scaling curve reflect the addition of
-individuals rather than unrelated sample composition. The MAT-Sum
-vocabulary is rebuilt at every $n$. For this reason, quality is
-evaluated in the fixed OSM-label space rather than by comparing native state distributions across different $n$.
+so that changes along the scaling curve reflect the addition of individuals rather than unrelated sample composition. The MAT-Sum vocabulary is rebuilt at every $n$. For this reason, quality is evaluated in the fixed OSM-label space rather than by comparing native state distributions across different $n$.
 
 \paragraph{RQ3: sequence model and privacy-fidelity trade-off.}
 We fix the MAT-Sum representation and compare the order-1 Markov and LSTM generators on the same paired user samples. Both models share the same vocabulary, empirical length model, dwell-time model, and output size. We measure first-order semantic fidelity through bigram TV, higher-order fidelity through trigram TV, and disclosure through near-copy rate, exact copies, and $\Delta\operatorname{DCR}$.
 
-Unless stated otherwise, each configuration generates $N=200$
-synthetic sequences and is evaluated over 20 paired replicates.
-We report means and 95\% confidence intervals. For direct paired
-comparisons, significance is assessed on replicate-wise differences using paired sign-flip permutation tests. Bootstrap confidence intervals of paired effects are reported where appropriate. Dataset-specific sample sizes and preprocessing choices are given in Section~\ref{sec:experiments}.
+Unless stated otherwise, each configuration generates $N=200$ synthetic sequences and is evaluated over 20 paired replicates.
+We report means and 95\% confidence intervals. For direct paired comparisons, significance is assessed on replicate-wise differences using paired sign-flip permutation tests. Bootstrap confidence intervals of paired effects are reported where appropriate. Dataset-specific sample sizes and preprocessing choices are given in Section~\ref{sec:experiments}.
 
-%\paragraph{Scope of the evaluation.}
-The research questions in this work concern the semantic sequence
-generation stage, i.e., the part of the pipeline above the geographic re-materialization step. Any subsequent instantiation of a generated semantic state at a concrete map location does not enter the distributional or disclosure results reported for RQ1--RQ3.
 
+%The three research questions concern semantic sequence generation itself. Geographic grounding is used only as an aggregate release-level validation in Section~5.2 and does not enter the fidelity or disclosure results reported for RQ1 to RQ3
 
 
 \section{Experimental Validation}
 \label{sec:experiments}
+
+
 \subsection{Datasets and protocol}
 
-We test the method on two complementary mobility datasets: Paris-OSM \cite{pugliese2025}  and Geolife \cite{geolife}.
+We test the method on two complementary publicly avaiable mobility datasets: Paris-OSM \cite{pugliese2025}  and Geolife \cite{geolife}.
 
 \textbf{Paris-OSM dataset}
-The Paris dataset is obtained from the semantically enriched OSM mobility dataset of~\cite{pugliese2025}: raw GPS
-traces are merged into one trajectory per de-identified OpenStreetMap contributor, i.e. we have 581
+The Paris dataset is obtained from the semantically enriched OSM mobility dataset of~\cite{pugliese2025}: raw GPS traces are merged into one trajectory per de-identified OpenStreetMap contributor, i.e. we have 581
 individuals, 1.57\,M points. The merging is per-user, so we will refer to per-trajectory metrics as per-person metrics. The user $ids$ are de-identified.
 We ran MAT-Sum map-enrichment on this area (squares, zoom~17): 32{,}697 enriched tiles
 $\rightarrow$ 18{,}554 semantic locations.
@@ -767,16 +679,66 @@ We selected a Beijing study area
 points); (3) a user is kept if it has $\ge3$ valid sessions. The semantic enrichment is identical to Paris-OSM (same OSM taxonomy, tessellation, aspects, $m{=}2,k{=}5$); the MAT-Sum vocabulary is, as in RQ2 and RQ3, rebuilt on the users of each sample.
 
 
+Both study areas are enriched with the \emph{same} public OSM taxonomy, which makes the semantic label
+space comparable across cities (Table~\ref{tab:semprofile}). On Paris the $66$ base aspects\footnote{The full aspect set (66 labels) includes, by decreasing frequency: residential, natural, bus,
+leisure, transportation, accommodation, food\_and\_beverages, sport, facilities, water, attraction,
+railway, commercial, education, healthcare, office, train, subway, tram, retail, pedestrian/\,cycle/\,motor
+roads, farmland, industrial, historic and cultural attractions, and further shop and amenity categories.} combine into
+$851$ distinct two-aspect contexts before the minimum-support merge; at $m{=}2,k{=}5$ the generative
+vocabulary comprises $328$ semantic states. GeoLife, enriched identically, yields a comparable label
+space ($65$ labels) and a vocabulary of $\sim\!594$ states on an $n{=}100$ sample (rebuilt per sample,
+Section~\ref{sec:experiments}).
+
+\begin{table}[t]
+  \caption{Semantic profile of the two study areas under the shared OSM taxonomy.}
+  \label{tab:semprofile}
+  \small
+  \begin{tabular}{@{}lcc@{}}
+    \toprule
+     & Paris-OSM & GeoLife \\
+    \midrule
+    Study area                 & central Paris & Beijing box \\
+    Enriched tiles             & $32{,}697$ & $40{,}620$ \\
+    Semantic locations         & $18{,}554$ & $11{,}050$ \\
+    Distinct semantic labels   & $65$ & $65$ \\
+    OSM coverage (labelled pts)& $\approx\!100\%$ & $99.4\%$ \\
+    MAT-Sum states ($m{=}2,k{=}5$) & $328$ & $\sim\!594^{\dagger}$ \\
+    \bottomrule
+  \end{tabular}
+  \\[2pt]\footnotesize $^{\dagger}$Paris on all $581$ individuals; GeoLife on an $n{=}100$ sample
+  (the data-dependent vocabulary is rebuilt per training sample).
+\end{table}
+
+As an illustration, one real Paris record (8 visits, after run-length collapsing)
+reads as an ordered sequence of multi-aspect semantic locations with dwell times:
+
+\begin{center}\small\ttfamily
+\begin{tabular}{@{}l l r@{}}
+sport         & \{leisure, sport\}            & 10 min \\
+commercial    & \{commercial, leisure\}       & \ 1 min \\
+sport         & \{leisure, sport\}            & \ 4 min \\
+facilities    & \{facilities, leisure\}       & 39 s   \\
+sport         & \{leisure, sport\}            & \ 3 min \\
+tram          & \{bus, tram\}                 & \ 2 min \\
+bus           & \{bus, commercial\}           & \ 6 min \\
+accommodation & \{accommodation, commercial\} & 32 s   \\
+\end{tabular}
+\end{center}
+
+\noindent Here the headline label is the location's dominant aspect and the set is its
+top-2 signature; the generator learns transitions over exactly these semantic states.
+
+
 \subsubsection*{GeoLife study-area audit and retention}
 \label{sec:geolife-audit}
 
-In this additional validation, we want to evaluate how the approach is still valid in another geographical area with a different mobility dataset, so we run a subset of the RQs experiments in the Geolife dataset.  
+In this additional validation, we want to evaluate whether the approach remains valid in another geographical area with a different mobility dataset, so we run a subset of the RQs experiments on the Geolife dataset.  
 
-Each research question is additionally re-examined on GeoLife as an external replication, reported under RQ1--RQ3 below; here we first describe the GeoLife study area and the data these replications use.
+Each research question is additionally re-examined on GeoLife as an external replication, reported under RQ1 to RQ3 below where we first describe the GeoLife study area and the data these replications use.
 
-We first present an analysis of experimental data for Geolife.
+%We first present an analysis of experimental data for Geolife.
 
-Table~\ref{tab:geolife-audit} reports the step-by-step retention. The filters are gentle---no stage
+Table~\ref{tab:geolife-audit} reports the step-by-step retention. The filters are gentle, no stage
 collapses the dataset, leaving $U{=}152$ effective users, $13{,}370$ valid sessions and
 $16.8$\,M points. Semantic coverage is excellent: $99.4\%$ of the retained points fall in an enriched
 cell ($0.6\%$ carry no label), over $40{,}620$ enriched cells, $11{,}050$ semantic locations and $65$
@@ -818,31 +780,40 @@ $n\in\{20,50,100,152\}$ for the Markov--LSTM comparison.
 \end{figure*}
 
 
-\subsection{Operating point: choosing $m$ and $k$}
+\subsection{Operating point: choosing $m$ and $k$ under fidelity and empirical disclosure}
 \label{sec:mk}
-The semantic resolution $m$ and the min-support $k$ set the generative alphabet, so we fix them on the
-fidelity--privacy trade-off rather than on fidelity alone (Figure~\ref{fig:mk}, on all 581 Paris
-individuals, $N{=}200$ synthetic). \emph{Fidelity alone would select $m{=}1$}: it attains the lowest
-semantic generation TV ($\approx 0.10$) — yet it has a $28$--$30\%$ near-copy rate and a few exact
-copies, because a coarse $\sim$50-state alphabet makes synthetic sequences collide with real records.
-It is the \emph{least} private setting. At $m{=}2$ the near-copy and exact-copy rates fall to zero and
-$\Delta$DCR is comfortably positive, at a fidelity of $0.27$--$0.29$; within $m{=}2$, $k{=}5$ gives the
-best fidelity ($0.271$) while $k$ trims the alphabet ($441\!\to\!200$ states) and the disclosure margin.
-At $m{=}3$ the alphabet explodes (up to $1410$ states, median support $\approx 5$): privacy stays high
-but fidelity degrades as the transition matrix becomes sparse. We therefore adopt \textbf{$m{=}2$, $k{=}5$}
-as the fidelity--privacy Pareto operating point. This also illustrates the paper's central point in miniature:
-a low distributional error does not imply a safe release, disclosure must be measured, not assumed.
+
+The semantic resolution $m$ and the minimum-support parameter $k$
+jointly determine the generative alphabet. We therefore choose their operating point by considering both semantic fidelity and empirical record-level disclosure, rather than fidelity alone
+(Figure\ref{fig:mk}, Paris-OSM, all 581 individuals, $N=200$ synthetic trajectories).
+
+Fidelity alone would favor $m=1$, which achieves the lowest semantic generation TV (approximately 0.10). However, this coarse representation, with only about 50 states, also produces substantial record-level overlap: approximately 28\% of the generated sequences satisfy our near-copy criterion and a small number are exact copies. Because the alphabet is highly compressed, part of this overlap may arise from representation-induced collisions rather than literal memorization.
+We therefore interpret this configuration as having the least favorable empirical disclosure profile among the tested settings.
+
+At $m=2$, near-copy and exact-copy rates fall to zero in this experiment
+and $\Delta$DCR remains clearly positive, while semantic generation TV
+remains in the range 0.27--0.29. Within this resolution, $k=5$ provides
+the best fidelity among the tested values. Increasing the semantic resolution to $m=3$ further separates generated records from the
+training data, but also produces a substantially larger and more sparse
+state space, with a corresponding loss in generation fidelity.
+
+We therefore adopt $m=2,k=5$ as a balanced operating point for the subsequent controlled experiments. This analysis also illustrates an important principle of our evaluation: distributional fidelity alone is
+not sufficient to characterize a synthetic release, and should be considered together with empirical record-level disclosure.
+
+
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{figures/fig_mk_sweep.png}
-  \caption{Choosing the operating point on Paris. \textbf{(A)}~semantic generation TV vs.\ near-copy rate:
-  $m{=}1$ (red) has the best fidelity but memorizes ($\sim$30\% near-copies); $m{=}2$/$m{=}3$ sit at zero
-  near-copy. \textbf{(B)}~fidelity vs.\ $\Delta$DCR: $m{=}3$ is safer but less faithful; $m{=}2$ balances
-  both. Marker size $\propto$ number of states; the star marks the adopted $m{=}2,k{=}5$.}
+  \caption{Choosing the operating point on Paris.
+(A) Semantic generation TV versus near-copy rate: $m=1$ achieves the best fidelity but exhibits substantial record-level overlap, whereas $m=2$ and $m=3$ show no near-copies under the adopted threshold. (B) Fidelity versus $\Delta$DCR: increasing semantic resolution
+generally increases separation from the training data but may reduce generation fidelity.
+Marker size is proportional to the number of states; the star marks the adopted balanced operating point, $m=2$, $k=5$.
+  }
   \label{fig:mk}
 \end{figure}
-Tabella compatta (opzionale, per l'appendice)
+
+
 \begin{table}[t]
   \caption{$(m,k)$ sweep on Paris-581 ($N{=}200$ synthetic). gen-TV = semantic generation TV
   (fixed OSM-label space); near-copy = \% with max training MUITAS $\ge0.95$; copies out of $200$.}
@@ -866,12 +837,10 @@ Tabella compatta (opzionale, per l'appendice)
 \subsection{RQ1 - The role of the semantic abstraction}
 \label{sec:abstraction}
 
-RQ1 asks whether semantics are useful not only for describing mobility, but also for generating it. We therefore keep the number of states and the generator fixed and change only how the state space is constructed. The key question is whether semantic abstraction merely preserves semantic labels better as expected or whether it also makes mobility easier to generate.
-MAT-Sum produces a transition structure that the same Markov model can reproduce much more accurately (native-state bigram TV...).
-The answer is positive: MAT-Sum not only preserves semantic information better, as expected, but also produces a transition space that the same generator can reproduce more accurately.
-
-
-Table~\ref{tab:abstraction} and Figure~\ref{fig:abstraction} show that the controlled comparison supports two complementary observations. As expected, an abstraction explicitly constructed from semantic context preserves OSM-level semantics better than purely geometric alternatives. More importantly, this advantage is not limited to the semantic evaluation space: under the same state budget and the same Markov generator, MAT-Sum also yields substantially lower generation error within its own native state space. This suggests that semantic abstraction not only preserves the target information, but also organizes mobility into a transition space that is easier to model.
+RQ1 asks whether semantics are useful not only for describing mobility, but also for generating it. We therefore keep the state-space budget and the sequence generator fixed and vary only how the state
+space is constructed. As expected, MAT-Sum preserves semantic information better than purely geometric abstractions. More importantly, it also produces a transition space that the same Markov
+generator can reproduce more accurately. Table \ref{tab:abstraction} and Figure \ref{fig:abstraction}
+quantify these two effects. As expected, an abstraction explicitly constructed from semantic context preserves OSM-level semantics better than purely geometric alternatives. More importantly, this advantage is not limited to the semantic evaluation space: under the same state budget and the same Markov generator, MAT-Sum also yields substantially lower generation error within its own native state space. This suggests that semantic abstraction not only preserves the target information, but also organizes mobility into a transition space that is easier to model.
 In Table ~\ref{tab:abstraction}, three abstractions are reduced to approximately 328 states and coupled with the same first-order Markov generator. Values are means and 95\% confidence intervals over the same 20 paired user samples used in Fig. \ref{fig:abstraction}. Metrics are grouped by measurement space: bigram TV is evaluated within each representation’s native state space, whereas distortion and generation TV are evaluated against the same OSM-label ground truth. Copies denote the mean number of generated state sequences that exactly match a sequence in the corresponding sampled real training set, per run, out of N=200 synthetic trajectories. 
 
 Two effects emerge. First, MAT-Sum produces a state space that is easier for the same generator to reproduce. Second, it loses considerably less semantic information during abstraction.
@@ -881,7 +850,7 @@ Quantitatively we can notice  the following facts:
 spatial ones. (ii)~It loses far less structure to the abstraction itself - the semantic
 distortion (real states mapped back to labels vs.\ ground truth) is 0.28 against 0.47--0.54,
 because a spatial cell inevitably mixes distinct semantic contexts, whereas a \textsc{MAT-Sum} state is
-semantically coherent by construction. (iii)~Its synthetic data reproduces the real semantic label-transition distribution markedly better (0.27 vs.\ 0.43--0.46). It is also the safest (no exact copies, against 1 and 9), and, uniquely, its states are interpretable, multi-aspect locations rather than anonymous cell or cluster ids. The role of MAT-Sum is thus neither the state count nor the generator: building the state space from semantics preserves structure that spatial abstractions cannot represent at the same resolution.
+semantically coherent by construction. (iii)~Its synthetic data reproduces the real semantic label-transition distribution markedly better (0.27 vs.\ 0.43--0.46). It also exhibits the lowest exact-copy rate among the three representations. The role of MAT-Sum is thus neither the state count nor the generator: building the state space from semantics preserves structure that spatial abstractions cannot represent at the same resolution.
 
 As expected from its semantic construction, MAT-Sum introduces substantially less semantic distortion than purely geometric abstractions.
 
@@ -999,13 +968,14 @@ and record structure.
 
  MAT-Sum achieves the lowest native-state bigram TV (0.259), compared with 0.389 for the grid and 0.381 for spatial clustering. Its advantage is even larger in the common semantic-label space: abstraction distortion decreases to 0.175, against 0.421–0.636, while semantic generation TV falls to 0.266, against 0.419–0.613. These results indicate that semantic locations are not only more coherent representations of the original data, but also define a transition space that can be learned more accurately by the same sequence generator.
 
-MAT-Sum also exhibits substantially less record-level reproduction than the matched geometric abstractions. It produces no exact training-session copies, compared with 1.6 copies per 200 synthetic sessions for clustering and 31.8 for the grid. Its near-copy rate is also markedly lower, although still non-negligible on GeoLife: 21.1\%, compared with 61.1\% and 76.2\%. We therefore interpret this as evidence that semantic abstraction strongly reduces memorization relative to geometric representations, rather than as a standalone guarantee of privacy. Overall, the role of MAT-Sum survives the change of city, period, data-collection modality, and record structure.
+MAT-Sum also exhibits substantially less record-level reproduction than the matched geometric abstractions. It produces no exact training-session copies, compared with 1.6 copies per 200 synthetic sessions for clustering and 31.8 for the grid. Its near-copy rate is also markedly lower, although still non-negligible on GeoLife: 21.1\%, compared with 61.1\% and 76.2\%. We therefore interpret this as evidence that semantic abstraction exhibits substantially lower record-level reproduction than the matched geometric representations. Overall, the role of MAT-Sum survives the change of city, period, data-collection modality, and record structure.
 
 
 \subsection{RQ2 - Small-data scaling and memorization}
 
-RQ2 asks whether this advantage remains useful when the confidential population is small.
-We therefore test how our approach addresses RQ2 on data scaling.
+RQ2 then asks how much confidential mobility data needs to be exposed to the synthesis process before the gains in fidelity begin to diminish, and how this choice affects empirical record-level disclosure.
+
+We therefore keep the representation and generator fixed and vary only the number of individuals available for training.
 
 In Figure \ref{fig:rq2} we report the plots for 
 \textsc{MAT-Sum}$+$order-1 Markov, $m{=}2,k{=}5$; 20 nested paired replicates $D_{20}\!\subset\!D_{50}\!\subset\!D_{100}\!\subset\!D_{300}\!\subset\!D_{581}$; fixed abstraction parameters). \textbf{(A)}~quality (semantic generation TV) improves steadily with the number of individuals $n$. \textbf{(B)}~synthetic-to-training DCR meets or exceeds the per-sample real-to-real baseline for $n\ge50$. MAT-Sum also yields the lowest exact-copy count, averaging 0.2 copies per 200 synthetic sequences, compared with 2.3 for Cluster-Markov and 4.9 for Grid-Markov.
@@ -1074,10 +1044,12 @@ In summary, additional individuals improve semantic fidelity and model support w
 We examine how generation quality and empirical disclosure risk evolve as the number of available users increases. We construct 20 nested user samples for n$\in${10,20,30,50,75,100,150,152}. At each value of n, the MAT-Sum vocabulary, order-1 Markov model, and empirical session-length model are estimated exclusively from the selected users, while the public map and semantic enrichment remain fixed. The main quality measure is semantic generation TV in the common OSM-label space. Disclosure is evaluated through exact session copies and a user-aware DCR, in which each synthetic session is compared with the closest session belonging to any training user, while the real-to-real baseline excludes sessions from the same individual.
 
 
-Table~\ref{tab:geolife-e2} and Figure~\ref{fig:geolife-e2} show that the direction replicates,  but the magnitude is smaller: quality improves monotonically yet gently ($0.273\!\to\!0.249$, a $9\%$
-reduction against $36\%$ on Paris), with an estimated scaling breakpoint $n^\star\!\approx\!75$ (95\% CI
-$[20,100]$; segmented fit of TV vs.\ $\log n$, bootstrapped over replicates). The reason is that GeoLife
-individuals are information-rich (a median of $30$ sessions and $\sim$1868 semantic visits each), so the generator is already competent at $n{=}10$ and saturates early, scaling behaviour is governed by the information per individual, not merely their number. Disclosure risk again stays limited: exact session copies are $0$ at every $n$, and the user-aware $\Delta$DCR is marginally negative only at $n{=}10$
+Table~\ref{tab:geolife-e2} and Figure~\ref{fig:geolife-e2} show  how that the overall direction replicates, although the gain is modest and the curve exhibits small-sample fluctuations (0.273 to 0.249, an overall 9\% reduction compared with 36\% on Paris).
+ with an estimated scaling breakpoint $n^\star\!\approx\!75$ (95\% CI
+$[20,100]$; segmented fit of TV vs.\ $\log n$, bootstrapped over replicates). 
+
+The reason is that GeoLife
+individuals are information-rich (a median of $30$ sessions and $\sim$1868 semantic visits each), the generator is already informative at n=10, so the marginal benefit of additional users is smaller. Disclosure risk again stays limited: exact session copies are $0$ at every $n$, and the user-aware $\Delta$DCR is marginally negative only at $n{=}10$
 ($-0.021\pm0.016$), turning positive for $n\ge20$ and widening to $+0.038$ as the real-to-real baseline
 falls with $n$ while the synthetic distance holds.
 
@@ -1138,7 +1110,7 @@ Table~\ref{tab:rq3} and Figure~\ref{fig:rq3} show that additional capacity does 
 
 The higher-order gain is accompanied by a less favorable disclosure profile, especially when data are scarce. At $n{=}20$, the LSTM near-copy rate reaches $3.5\%$ against $0.1\%$ for the Markov, and its $\Delta\mathrm{DCR}$ is lower at every $n$, becoming positive only at $n{=}100$ whereas the Markov does so by $n{=}50$. The gap narrows as the training population grows, but it is sharpest in the small-data regime that motivates the work.
 
-\emph{Summary.} The answer is not uniformly yes: the LSTM captures longer-range structure, but the Markov provides better first-order fidelity and a safer empirical disclosure profile. At a fixed \textsc{MAT-Sum} representation, the two generators occupy different positions on the privacy--fidelity frontier: the LSTM captures higher-order structure better, while the order-1 Markov provides better first-order fidelity and a more conservative empirical disclosure profile. For the small confidential-data setting targeted here, we therefore retain the order-1 Markov as the conservative operating point in the remainder.
+\emph{Summary.} The answer is not uniformly yes: the LSTM captures longer-range structure, but the Markov provides better first-order fidelity and a a more conservative empirical disclosure profile. At a fixed \textsc{MAT-Sum} representation, the two generators occupy different positions on the privacy--fidelity frontier: the LSTM captures higher-order structure better, while the order-1 Markov provides better first-order fidelity and a more conservative empirical disclosure profile. For the small confidential-data setting targeted here, we therefore retain the order-1 Markov as the conservative operating point in the remainder.
 
 
 
@@ -1277,11 +1249,11 @@ interpretable order-1 Markov therefore represents the more conservative operatin
 
 The two generators occupy different positions on the privacy–fidelity frontier. The Markov model consistently achieves lower semantic bigram TV, with the gap increasing from 0.021 at n=20 to 0.043 at n=152. By contrast, the LSTM consistently achieves lower trigram TV—approximately 0.49, compared with 0.57–0.60 for the Markov—showing that its additional capacity captures higher-order sequential dependencies that an order-1 process cannot model directly. Thus, the LSTM provides a genuine gain in higher-order fidelity, rather than a uniformly inferior reconstruction of the data.
 
-This higher-order gain is accompanied by a substantially less favorable disclosure profile, especially when users are scarce. At n=20, the LSTM produces a 6.47\% near-copy rate, compared with 0.42\% for the Markov, and its $\Delta$DCR is negative (−0.053), whereas the Markov remains slightly positive (+0.010). The disclosure gap narrows as n increases, but the Markov retains the higher $\Delta$DCR and lower near-copy rate across the evaluated regimes. These findings indicate that higher model capacity can recover longer-range structure, but at the cost of greater proximity to individual training records in the small-data regime.
+This higher-order gain is accompanied by a substantially less favorable disclosure profile, especially when users are scarce. At n=20, the LSTM produces a 6.47\% near-copy rate, compared with 0.42\% for the Markov, and its $\Delta$DCR is negative (-0.053), whereas the Markov remains slightly positive (+0.010). The disclosure gap narrows as n increases, but the Markov retains the higher $\Delta$DCR and lower near-copy rate across the evaluated regimes. These findings indicate that higher model capacity can recover longer-range structure, but at the cost of greater proximity to individual training records in the small-data regime.
 
 For the target application of generating shareable mobility data from small datasets, the order-1 Markov therefore represents the more conservative operating point: it sacrifices some higher-order fidelity while providing better first-order distributional fidelity and consistently lower empirical disclosure risk. The LSTM remains useful as evidence that model capacity changes the nature of the fidelity being preserved, but its advantages should be assessed jointly with the associated memorization cost rather than through fidelity alone.
 
-Overall, the GeoLife experiments confirm the three central findings of the paper. First, semantic abstraction produces a more faithful and learnable generative representation than matched geometric alternatives. Second, the value of additional users depends on the amount of mobility information contributed by each individual, rather than on population size alone. Third, generator capacity introduces a genuine privacy–fidelity trade-off: higher-capacity models recover more higher-order structure, while simpler mechanistic generation provides a more favourable empirical disclosure profile in the small-data regimes that motivate the work.
+Overall, the GeoLife experiments confirm the three central findings of the paper. First, semantic abstraction produces a more faithful and learnable generative representation than matched geometric alternatives. Second, the value of additional users depends on the amount of mobility information contributed by each individual, rather than on population size alone. Third, generator capacity introduces a genuine privacy–fidelity trade-off: higher-capacity models recover more higher-order structure, while the low-capacity order-1 Markov generator provides a more favourable empirical disclosure profile in the small-data regimes that motivate the work.
 
 \subsection{What generalizes across datasets}
 \label{sec:cross}
@@ -1310,7 +1282,7 @@ however, is largely lost ($\approx\!25\%$ retained): the memoryless generator ca
 higher-order structure that a second-order predictor exploits (real second-order accuracy nearly
 doubles the first-order one). This result shows that higher-order structure is relevant to downstream utility and helps interpret the trigram advantage observed for the LSTM in RQ3. We do not claim here that the LSTM's higher-order fidelity directly translates into improved TSTR utility, since this TSTR experiment evaluates the Markov-generated release rather than a Markov-LSTM utility comparison.
 
-\subsection{Utility of the semantic representation, independent of GPS.}
+\subsection{Aggregate geographic utility without individual GPS reconstruction}
 
 
 \begin{figure*}[t]
@@ -1336,7 +1308,8 @@ doubles the first-order one). This result shows that higher-order structure is r
   \label{fig:geo-categories}
 \end{figure*}
 
-To show that the semantic surrogate remains geographically meaningful, we project the generated
+As an additional release-level validation, we examine whether the synthetic semantic sequences retain meaningful aggregate geographic structure, without reconstructing individual GPS trajectories.
+To this end, we project the generated
 sequences back onto the public map: each synthetic semantic state is grounded in the tiles that
 carry it, weighted by the generator's state frequencies. At the aggregate level the synthetic
 visit density reproduces the real one across the study area (Figure~\ref{fig:geo-aggregate};
@@ -1382,9 +1355,11 @@ individual GPS geometry is deliberately not reconstructed.
 Mean $\Delta$DCR summarises the average record; disclosure risk, however, lives in the tail. We
 therefore report (i) the near-copy rate as a function of the threshold $\tau\in[0.80,1.0]$, against
 a real-to-real baseline (each real record vs.\ all other real records; user-aware on GeoLife), and
-(ii) the tail of the DCR distribution (Figures~\ref{fig:disc-paris}--\ref{fig:disc-geo}). On both
-datasets the synthetic near-copy rate lies \emph{below the real-to-real similarity floor at every
-threshold}: at $\tau{=}0.95$ it is $0.08$--$0.63\%$ on Paris and $1.6$--$2.2\%$ on GeoLife, against
+(ii) the tail of the DCR distribution (Figures~\ref{fig:disc-paris}--\ref{fig:disc-geo}). 
+%On both datasets the synthetic near-copy rate lies \emph{below the real-to-real similarity floor at every
+%threshold}: 
+On both datasets the synthetic near-copy rate lies below the real-to-real similarity baseline across almost all evaluated thresholds and data regimes.
+At $\tau{=}0.95$ it is $0.08$--$0.63\%$ on Paris and $1.6$--$2.2\%$ on GeoLife, against
 real-to-real baselines of $4.5$--$27\%$ and $4.9$--$26\%$ respectively---synthetic records are no
 closer to the training set than real records already are to one another. The fifth-percentile DCR
 stays well positive ($0.11$--$0.20$ on Paris, $0.07$--$0.08$ on GeoLife). The minimum DCR is $0$ at
@@ -1492,7 +1467,7 @@ distribution against a real-to-real baseline, a membership-inference attack, and
 that record-level disclosure is generally limited on both datasets: outside the smallest-data edge cases, synthetic records are not closer to the training data than the matched real-to-real baseline, the membership attack is near chance or below it, and synthetic records are an order of magnitude less uniquely identifiable than real ones.
 
 Taken together, these findings support a representation-first, privacy-aware view of synthetic mobility generation. When the goal is to create a shareable surrogate of a small confidential population,
-semantic abstraction can help preserve the mobility information of interest while reducing dependence on individual training records.
+semantic abstraction can help preserve the mobility information of interest while exhibiting limited empirical record-level disclosure under the evaluated proximity, membership, and unicity measures
 
 
 As future work, we plan a system-level comparison with recent geometry-centric generation pipelines. Such a comparison requires re-running the approaches under common data, preprocessing, and evaluation conditions, and jointly assessing semantic fidelity,
