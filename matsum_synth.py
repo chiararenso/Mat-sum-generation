@@ -26,10 +26,11 @@ OUT  = os.environ.get("MATSUM_OUT", os.path.join(HERE, "output"))
 FIG  = os.environ.get("MATSUM_FIG", os.path.join(HERE, "figures"))
 os.makedirs(FIG, exist_ok=True)
 
-# ---- prototype parameters ----
-M_TOP     = 3      # semantic granularity: top-m TF-IDF aspects define a symbol
-K_SUPPORT = 2      # k-anonymity: every symbol must occur >= k times
-N_SYNTH   = 200    # size of the synthetic dataset (larger than the 20 real)
+# ---- operating point (validated on Paris-581; was m=3,k=2 tuned for the 20-trajectory PoC) ----
+M_TOP     = 2      # semantic granularity: top-m TF-IDF aspects define a symbol
+K_SUPPORT = 5      # k-anonymity: every symbol must occur >= k times
+N_SYNTH   = 2000   # size of the synthetic dataset (was 200, tuned for the 20-trajectory PoC;
+                    # too small at n=20000 real for a stable bigram-TV estimate)
 ALPHA     = 0.1    # Laplace smoothing for the transition matrix
 MAX_LEN   = 120    # safety cap on generated sequence length
 SEED      = 42
@@ -216,19 +217,42 @@ def main():
     dw_s = np.array([d for v in synth.values() for _, d in v]) / 60
     print(f"  dwell(min) median real={np.median(dw_r):.1f}  synth={np.median(dw_s):.1f}")
     real_list = list(seqs.values())
-    mu_best = [max((muitas_sim(s, r) for r in real_list), default=0.0) for s in synth.values()]
+    # All-pairs MUITAS is O(n^2) and only tractable for small n (fine at n=20, infeasible at
+    # n~20000 -- ~4e8 comparisons). Above REF_CAP, use a fixed-seed random subsample as the
+    # comparison pool: a quick, honest approximation for a sanity-check run, not a substitute
+    # for a properly vectorized full-population audit (see val_paris_eval.py's approach) before
+    # drawing final privacy conclusions on the full dataset.
+    REF_CAP = 1000
+    if len(real_list) > REF_CAP:
+        idx = rng.choice(len(real_list), REF_CAP, replace=False)
+        ref_list = [real_list[i] for i in idx]
+        print(f"  [note] {len(real_list)} real sequences -> sampling {REF_CAP} as the comparison "
+              f"pool for MUITAS/DCR (all-pairs is infeasible at this scale)")
+    else:
+        ref_list = real_list
+    n_synth_seqs = len(synth)
+    step = max(1, n_synth_seqs // 10)
+    mu_best = []
+    for i, s in enumerate(synth.values()):
+        mu_best.append(max((muitas_sim(s, r) for r in ref_list), default=0.0))
+        if (i + 1) % step == 0 or i + 1 == n_synth_seqs:
+            print(f"  [progress] synth->real nearest match: {i+1}/{n_synth_seqs}", flush=True)
     print(f"  MUITAS synth->nearest real: mean={np.mean(mu_best):.3f} "
           f"(high = semantically realistic)")
 
     print("\n[Privacy]")
     dcr_synth = 1 - np.array(mu_best)
-    # baseline: real-to-real leave-one-out closest
+    # baseline: real-to-real leave-one-out closest, over the same comparison pool
+    n_ref = len(ref_list)
+    step2 = max(1, n_ref // 10)
     dcr_real = []
-    for i, r in enumerate(real_list):
-        others = real_list[:i] + real_list[i+1:]
+    for i, r in enumerate(ref_list):
+        others = ref_list[:i] + ref_list[i+1:]
         dcr_real.append(1 - max((muitas_sim(r, o) for o in others), default=0.0))
+        if (i + 1) % step2 == 0 or i + 1 == n_ref:
+            print(f"  [progress] real-to-real baseline: {i+1}/{n_ref}", flush=True)
     dcr_real = np.array(dcr_real)
-    exact = sum(any(seq_symbols(s) == seq_symbols(r) for r in real_list) for s in synth.values())
+    exact = sum(any(seq_symbols(s) == seq_symbols(r) for r in ref_list) for s in synth.values())
     real_bigrams = set(db_r)
     synth_bigrams = set(db_s)
     novelty = 1 - len(synth_bigrams & real_bigrams) / (len(synth_bigrams) or 1)
