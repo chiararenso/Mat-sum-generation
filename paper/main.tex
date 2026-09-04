@@ -131,10 +131,8 @@ and a higher-capacity LSTM compare in semantic fidelity and empirical
 record-level disclosure risk across data regimes?
 
 \item[\textbf{RQ4: Disclosure resistance and utility of the release.}]
-Beyond the record-level measures used to compare design choices in
-RQ1--RQ3, is the final released configuration resistant to realistic
-disclosure attacks -- including a shadow-model membership-inference
-attack -- and does it retain downstream utility?
+Beyond the record-level measures used to compare design choices in RQ1-RQ3, is the final released configuration resistant to realistic disclosure attacks? %including a shadow-model membership-inference attack - 
+And does it retain downstream utility?
 
 \end{description}
 
@@ -1420,6 +1418,35 @@ negative $\Delta$DCR reported there.
   \includegraphics[width=\columnwidth]{figures/GeoLife_disclosure.png}
   \caption{GeoLife disclosure tail (user-aware baseline); same reading as Fig.~\ref{fig:disc-paris}.}
   \label{fig:disc-geo}
+\end{figure}
+
+\textbf{Release size.} The results above fix the release size at $N{=}200$ synthetic sequences,
+the paper's operating point throughout. Because DCR is the distance to the \emph{closest}
+synthetic record, releasing more sequences from the same fixed model mechanically brings every
+real record's closest match closer, independent of any change to the model itself. We quantify
+this on Paris-OSM: a single order-1 Markov model is trained once on the full population
+($n{=}581$, $m{=}2,k{=}5$), and the release size is varied over
+$N\in\{200,1{,}000,5{,}000,10{,}000,20{,}000\}$, recomputing the DCR distribution over all $581$
+individuals against the first $N$ synthetic draws each time (5 replicates, mean $\pm$ 95\% CI;
+Figure~\ref{fig:release-size}). Mean DCR decreases monotonically with $N$ (from
+$0.410\pm0.008$ at $N{=}200$ to $0.278\pm0.002$ at $N{=}20{,}000$) but stays comfortably above the
+real-to-real baseline ($0.171$) throughout. The fifth-percentile (worst-case) DCR, however,
+crosses that baseline between $N{=}5{,}000$ ($0.170\pm0.012$, statistically indistinguishable
+from the baseline) and $N{=}10{,}000$ ($0.153\pm0.009$, clearly below it): beyond roughly
+$5{,}000$ released sequences, the most-exposed individuals become closer to the release than
+real individuals typically are to one another, even though the average record does not. Exact
+copies grow accordingly but remain small in absolute terms ($0$ at $N{=}200$ to $8.8$ at
+$N{=}20{,}000$). The paper's chosen operating point sits roughly $25\times$ below this empirical
+margin; a substantially larger open release from the same fixed model would need this
+worst-case trade-off re-examined.
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\columnwidth]{figures/fig_release_size.png}
+  \caption{Release size vs.\ disclosure risk, Paris-OSM, fixed order-1 Markov model
+  ($n{=}581$, $m{=}2,k{=}5$), 5 replicates. Left: mean and fifth-percentile DCR vs.\ release
+  size $N$, with the real-to-real baseline (mean and fifth-percentile) as reference lines.
+  Right: cumulative exact-copy count vs.\ $N$.}
+  \label{fig:release-size}
 \end{figure}
 
 \subsection{Privacy analysis: membership inference and unicity}
