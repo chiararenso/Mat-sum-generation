@@ -1,0 +1,4 @@
+method,n_states_mean,n_states_ci95,n_transitions_mean,n_transitions_ci95,density_mean,density_ci95,mean_support_mean,mean_support_ci95,median_support_mean,median_support_ci95,entropy_bits_mean,entropy_bits_ci95,perplexity_mean,perplexity_ci95
+Grid-Markov,299.45,3.8368,868.85,10.9804,0.0097,0.0002,5.6408,0.1029,2.05,0.1047,7.7561,0.0307,216.3953,4.6317
+Cluster-Markov,316.3,2.0321,1160.25,9.2461,0.0116,0.0001,5.1269,0.0748,2.95,0.1047,8.0334,0.0181,262.0783,3.3017
+MAT-Sum-Markov,326.6,0.4655,5161.4,58.0434,0.0484,0.0005,5.3099,0.0698,2.0,0.0,7.2512,0.0146,152.3764,1.5567

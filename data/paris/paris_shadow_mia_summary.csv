@@ -1,0 +1,2 @@
+K_SHADOW,R,n_target_train,n_target_nonmember,auc_shadow_mean,auc_shadow_ci95,auc_simple_mean,auc_simple_ci95,paired_diff_mean,paired_diff_ci95,wilcoxon_p
+20,10,465,116,0.4996,0.0106,0.475,0.0093,0.0246,0.0174,0.0098

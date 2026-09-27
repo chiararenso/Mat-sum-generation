@@ -28,6 +28,16 @@ osm_pbf/
 # Committed prepared PUBLIC datasets (needed to run the experiments; all < 100 MB)
 !data/paris/*.parquet
 !data/geolife/*.parquet
+!data/geolife/*.pkl
+!data/geolife/*.csv
+!data/geolife/*.png
+# Beijing OSM extract (BBBike, public); small enough to commit alongside the prepared data
+!data/geolife/beijing.osm.pbf
+# The two large raw/intermediate GeoLife files are NOT committed (hundreds of MB): they
+# regenerate deterministically in a few minutes from beijing.osm.pbf + the public GeoLife
+# download via geolife_audit.py -> geolife_points.py -> matsum_prepare.py (see data/README.md)
+data/geolife/geolife_points.parquet
+data/geolife/trajectories.parquet
 
 # ============================================================================
 # Environment / caches / OS junk
