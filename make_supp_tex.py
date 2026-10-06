@@ -41,9 +41,9 @@ w = out.append
 # ---------------- S-A: n-grams ----------------
 ng = pd.read_csv(D + "val_abstraction_ngrams.csv")
 pg = pd.read_csv(D + "val_abstraction_ngrams_paired.csv")
-w(r"""\subsection{Robustness of RQ1 beyond bigrams}
+w(r"""\section{Robustness of RQ1 beyond bigrams}
 \label{supp:ngrams}
-Table~\ref{tab:supp-ngram-paired} reports the paired differences $d_i=\mathrm{TV}_{i,\text{baseline}}-\mathrm{TV}_{i,\text{MAT-Sum}}$ underlying the $n$-gram comparison of Section~4.3 (positive values favour MAT-Sum), computed over the same $R{=}20$ paired user samples as Tables~3--4. Table~\ref{tab:supp-ngram-native} gives the corresponding TV in each representation's native state space; the split-half floor is computed in the same state space. The real-vs-real floor is the TV between two disjoint random halves of the paired real sample, each of about the size of the synthetic release, and indicates the order beyond which $n$-gram estimates are dominated by sampling sparsity (distinct real label $n$-grams in a paired sample: 57, 735, 3{,}199, 6{,}307 and 8{,}421 for $n{=}1,\dots,5$).
+Table~\ref{tab:supp-ngram-paired} reports the paired differences $d_i=\mathrm{TV}_{i,\text{baseline}}-\mathrm{TV}_{i,\text{MAT-Sum}}$ underlying the $n$-gram comparison of Table~5 and Section~4.3 of the main paper (positive values favour MAT-Sum), computed over the same $R{=}20$ paired user samples as Tables~3--4 of the main paper. Table~\ref{tab:supp-ngram-native} gives the corresponding TV in each representation's native state space; the split-half floor is computed in the same state space. The real-vs-real floor is the TV between two disjoint random halves of the paired real sample, each of about the size of the synthetic release, and indicates the order beyond which $n$-gram estimates are dominated by sampling sparsity (distinct real label $n$-grams in a paired sample: 57, 735, 3{,}199, 6{,}307 and 8{,}421 for $n{=}1,\dots,5$).
 """)
 w(r"""\begin{table}[!t]
 \caption{Paired differences in label-space $n$-gram TV (baseline $-$ MAT-Sum; mean over 20 paired samples), Cohen's $d_z$, and number of samples (out of 20) in which MAT-Sum is better. All Wilcoxon $p=1.9\times10^{-6}$ unless noted.}
@@ -90,9 +90,9 @@ w(r"""\bottomrule
 # ---------------- S-B: order-2 ----------------
 sm = pd.read_csv(D + "val_rq3_order2_summary.csv")
 pr = pd.read_csv(D + "val_rq3_order2_paired.csv")
-w(r"""\subsection{RQ3 capacity ladder: order-2 Markov}
+w(r"""\section{RQ3 capacity ladder: order-2 Markov}
 \label{supp:order2}
-The order-2 generator is $P(j\mid a,b)=(C_{abj}+\lambda P_1(j\mid b))/(C_{ab}+\lambda)$, with $P_1$ the smoothed order-1 model ($\alpha{=}0.1$), unseen contexts falling back exactly to $P_1$; the light variant uses $\lambda{=}1$ and the heavy variant $\lambda{=}\alpha|\mathcal{V}_{m,k}|$. Order-1 Markov and LSTM rows are those of Table~7 and Figure~7 (same nested paired samples, same reference sets and matched real-to-real baseline); the order-2 rows reuse them, so all comparisons are paired by (replicate, $n$). Table~\ref{tab:supp-order2-full} reports all metrics at every $n$, and Table~\ref{tab:supp-order2-paired} the paired differences.
+The order-2 generator is $P(j\mid a,b)=(C_{abj}+\lambda P_1(j\mid b))/(C_{ab}+\lambda)$, with $P_1$ the smoothed order-1 model ($\alpha{=}0.1$), unseen contexts falling back exactly to $P_1$; the light variant uses $\lambda{=}1$ and the heavy variant $\lambda{=}\alpha|\mathcal{V}_{m,k}|$. Order-1 Markov and LSTM rows are those of Table~8 and Figure~7 of the main paper (same nested paired samples, same reference sets and matched real-to-real baseline); the order-2 rows reuse them, so all comparisons are paired by (replicate, $n$). Table~\ref{tab:supp-order2-full} reports all metrics at every $n$ (Table~9 of the main paper shows the excerpt $n\in\{20,100,581\}$), and Table~\ref{tab:supp-order2-paired} the paired differences.
 """)
 w(r"""\begin{table}[!t]
 \caption{Capacity ladder on Paris-OSM (MAT-Sum, $m{=}2$, $k{=}5$; 20 nested paired replicates; mean $\pm$ 95\% CI; $N{=}200$ synthetic sequences per run). Near-copy: \% with MUITAS $\ge 0.95$; exact copies out of 200.}
@@ -142,9 +142,9 @@ w(r"""\bottomrule
 
 # ---------------- S-C: Pareto ----------------
 pa = pd.read_csv(D + "val_rq3_pareto.csv")
-w(r"""\subsection{Pareto analysis of the generators}
+w(r"""\section{Pareto analysis of the generators}
 \label{supp:pareto}
-For each $n$ (a common data regime), a generator is Pareto-optimal if no other generator is at least as good on all objectives and strictly better on at least one. Objectives are semantic bigram TV (min), trigram TV (min), near-copy rate (min) and $\Delta$DCR (max), taken at the replicate means of Table~\ref{tab:supp-order2-full}. Table~\ref{tab:supp-pareto} lists the non-dominated generators. On the two-objective projections the LSTM is never on the front; it enters the four-objective front at $n\ge 300$ only as a trade-off point, since no single generator is at least as good on all four objectives (its near-copy rate is lower than that of the light order-2 model, and its trigram TV lower than that of the heavy variant, but the near-copy difference with the light variant is not statistically significant, paired $p\ge 0.06$).
+For each $n$ (a common data regime), a generator is Pareto-optimal if no other generator is at least as good on all objectives and strictly better on at least one. Objectives are semantic bigram TV (min), trigram TV (min), near-copy rate (min) and $\Delta$DCR (max), taken at the replicate means of Table~\ref{tab:supp-order2-full}. Table~\ref{tab:supp-pareto} lists the non-dominated generators and Figure~\ref{fig:supp-pareto} shows the corresponding two-objective views. On the two-objective projections the LSTM is never on the front; it enters the four-objective front at $n\ge 300$ only as a trade-off point, since no single generator is at least as good on all four objectives (its near-copy rate is lower than that of the light order-2 model, and its trigram TV lower than that of the heavy variant, but the near-copy difference with the light variant is not statistically significant, paired $p\ge 0.06$).
 """)
 w(r"""\begin{table}[!t]
 \caption{Pareto-optimal generators per $n$ (replicate means; M1 = Markov-1, M2L = Markov-2 light, M2H = Markov-2 heavy, L = LSTM).}
@@ -163,10 +163,17 @@ w(r"""\bottomrule
 \end{tabular}
 \end{table}
 """)
+w(r"""\begin{figure}[!t]
+\centering
+\includegraphics[width=\linewidth]{val_rq3_pareto.png}
+\caption{Pareto view of the RQ3 generator comparison (Paris-OSM, 20 paired replicates; mean $\pm$ 95\% CI). Rows: semantic bigram and trigram TV against $\Delta$DCR; columns: $n=20,100,581$. Black outlines and dashed lines mark the Pareto-optimal generators on that pair of metrics.}
+\label{fig:supp-pareto}
+\end{figure}
+""")
 
 # ---------------- S-D: hypervolume ----------------
 hv = pd.read_csv(D + "val_rq3_hypervolume_summary.csv")
-w(r"""\subsection{Hypervolume of the generator comparison}
+w(r"""\section{Hypervolume of the generator comparison}
 \label{supp:hv}
 To summarise each generator by a single number we compute, per paired replicate, the hypervolume dominated by its point in objective space. Within each $n$, every objective is min--max normalised over all (replicate, generator) values, with $\Delta$DCR flipped so that all objectives are minimised, and the reference point is $1.1$ on every axis; we report the dominated volume as a fraction of the ideal box ($1.1^d$), and the exclusive contribution of each generator to the hypervolume of the union of the four generators (zero if dominated by the others). Values are comparable across generators within an $n$, not across $n$. The ranking in Table~\ref{tab:supp-hv} is unchanged when the reference point is moved to $1.5$ or $2.0$, except for a swap between the two order-2 variants at $n{=}50$ with reference $2.0$. The result depends on the objective set: with bigram TV and $\Delta$DCR alone the order-1 model is best, with trigram TV and $\Delta$DCR the light order-2 model is best, and with all four objectives the order-2 variants are best; the LSTM is last under the four-objective set at every $n$ (paired Wilcoxon $p<10^{-4}$ vs.\ both order-2 variants), with an exclusive contribution of at most 0.006.
 """)
