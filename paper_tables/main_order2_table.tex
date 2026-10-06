@@ -1,0 +1,26 @@
+\begin{table}[!t]
+\caption{RQ3 capacity ladder on Paris-OSM (MAT-Sum representation, 20 nested paired replicates; mean $\pm$ 95\% CI). Near-copy: \% of $N{=}200$ synthetic sequences with MUITAS $\ge 0.95$. Best value per $n$ in bold.}
+\label{tab:order2}
+\centering
+\small
+\begin{tabular}{llcccc}
+\toprule
+$n$ & generator & bigram TV $\downarrow$ & trigram TV $\downarrow$ & near-copy \% $\downarrow$ & $\Delta$DCR $\uparrow$ \\
+\midrule
+20 & Markov-1 & \textbf{0.424$\pm$0.014} & 0.709$\pm$0.017 & \textbf{0.28$\pm$0.33} & $-$0.017$\pm$0.019 \\
+ & Markov-2 (light) & 0.437$\pm$0.014 & \textbf{0.661$\pm$0.017} & 0.80$\pm$0.61 & $-$0.029$\pm$0.019 \\
+ & Markov-2 (heavy) & 0.428$\pm$0.015 & 0.686$\pm$0.018 & 0.48$\pm$0.58 & \textbf{$-$0.016$\pm$0.019} \\
+ & LSTM & 0.483$\pm$0.013 & 0.692$\pm$0.014 & 3.50$\pm$1.33 & $-$0.093$\pm$0.020 \\
+\midrule
+100 & Markov-1 & \textbf{0.305$\pm$0.009} & 0.615$\pm$0.009 & 0.10$\pm$0.12 & \textbf{0.122$\pm$0.010} \\
+ & Markov-2 (light) & 0.329$\pm$0.011 & \textbf{0.549$\pm$0.011} & 0.33$\pm$0.32 & 0.076$\pm$0.009 \\
+ & Markov-2 (heavy) & 0.310$\pm$0.010 & 0.594$\pm$0.011 & \textbf{0.08$\pm$0.09} & 0.109$\pm$0.010 \\
+ & LSTM & 0.363$\pm$0.014 & 0.569$\pm$0.012 & 0.33$\pm$0.32 & 0.029$\pm$0.008 \\
+\midrule
+581 & Markov-1 & \textbf{0.273$\pm$0.003} & 0.568$\pm$0.002 & 0.23$\pm$0.12 & \textbf{0.144$\pm$0.006} \\
+ & Markov-2 (light) & 0.300$\pm$0.004 & \textbf{0.496$\pm$0.003} & 0.35$\pm$0.19 & 0.100$\pm$0.007 \\
+ & Markov-2 (heavy) & 0.282$\pm$0.003 & 0.537$\pm$0.003 & \textbf{0.10$\pm$0.10} & 0.131$\pm$0.005 \\
+ & LSTM & 0.314$\pm$0.006 & 0.524$\pm$0.004 & \textbf{0.10$\pm$0.12} & 0.070$\pm$0.006 \\
+\bottomrule
+\end{tabular}
+\end{table}
