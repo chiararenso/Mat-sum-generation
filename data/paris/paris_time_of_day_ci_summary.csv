@@ -1,0 +1,10 @@
+level,category,synth_JSD,synth_JSD_ci,synth_r,synth_r_ci,floor_JSD,floor_JSD_ci,floor_r,floor_r_ci,real_share_pct
+category,bus,0.0257,0.0025,0.8496,0.019,0.0573,0.0091,0.7395,0.0384,38.8
+category,accomodation,0.033,0.0039,0.8522,0.0217,0.0294,0.0026,0.8957,0.0167,23.0
+category,facilities,0.0357,0.0055,0.8545,0.0352,0.0338,0.0034,0.8914,0.0145,15.6
+category,train,0.0346,0.0033,0.7953,0.029,0.0646,0.0074,0.7153,0.0495,10.8
+category,natural,0.069,0.0068,0.8076,0.0298,0.0561,0.0052,0.81,0.0209,7.4
+category,residential,0.0808,0.0086,0.7384,0.0384,0.1087,0.0102,0.6857,0.0428,2.0
+category,outdoors_and_sport_vehicles,0.0751,0.0071,0.7529,0.0302,0.1209,0.0121,0.5662,0.0511,2.4
+weighted,visit-weighted mean,0.0354,0.0025,0.8374,0.0146,0.0505,0.0039,0.7964,0.0176,
+flattened,flattened (category x hour),0.0378,0.0025,0.9161,0.0075,0.0521,0.0041,0.8749,0.0153,
