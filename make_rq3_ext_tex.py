@@ -47,7 +47,7 @@ w(r"""\bottomrule
 # ---- supplementary: n-gram TV of the RQ3 generators
 w(r"""\section{RQ3: $n$-gram fidelity up to order 5}
 \label{supp:rq3-ngrams}
-Table~\ref{tab:supp-rq3-ngrams} reports the TV between the real and the synthetic $n$-gram distributions in the common OSM-label space for orders 1--5, for the order-1 Markov, the order-2 Markov (light and heavy back-off), the original LSTM, and the real-vs-real floor (two disjoint halves of the real sample). The synthetic sequences are regenerated with the seeds of the original RQ3 runs; the LSTM and order-2 rows reproduce the values of Tables~\ref{tab:supp-order2-full} exactly. Table~\ref{tab:supp-rq3-ngrams-paired} gives the paired differences between each order-2 variant and the LSTM (negative: the order-2 model is better).
+Table~\ref{tab:supp-rq3-ngrams} shows the TV between real and synthetic $n$-grams, for orders 1 to 5. The generators are the order-1 Markov, the order-2 Markov (light and heavy back-off) and the original LSTM. The last row of each block is the real-vs-real floor: the TV between two halves of the real sample. We regenerated the synthetic sequences with the original seeds, so the LSTM and order-2 rows match Table~\ref{tab:supp-order2-full} exactly. Table~\ref{tab:supp-rq3-ngrams-paired} gives the paired differences between each order-2 model and the LSTM. Negative values mean that the order-2 model is better.
 
 \begin{table}[!t]
 \caption{$n$-gram TV in the common OSM-label space on Paris-OSM (mean $\pm$ 95\% CI over 20 paired replicates; lower is better). Floor: two disjoint halves of the real sample.}
@@ -91,7 +91,7 @@ w(r"""\bottomrule
 
 \section{RQ3: LSTM capacity scale}
 \label{supp:rq3-capacity}
-To check that the LSTM comparison does not depend on a single small network, we widen the LSTM (hidden size 128 and 256, one layer) and deepen it (two layers of size 64), keeping embedding size 32, the optimiser (Adam, learning rate $5\times10^{-3}$), the 120 full-batch epochs, the vocabulary, the nested samples and the seeds of RQ3 fixed. Table~\ref{tab:supp-capacity} reports all five sample sizes. Larger networks lower the 4- and 5-gram TV but raise the bigram TV and, above all, the near-copy rate and the proximity to the training records when data are scarce; two layers bring no gain. No configuration matches the light order-2 Markov on fidelity and disclosure together. These results hold for the LSTM family and the fixed training protocol used here; no hyperparameter search, dropout or early stopping was tried.
+We train larger LSTMs: hidden size 128 and 256 with one layer, and two layers of size 64. Everything else is as in the original run: embedding size 32, Adam with learning rate $5\times10^{-3}$, 120 full-batch epochs, and the same vocabulary, samples and seeds. Table~\ref{tab:supp-capacity} reports all sample sizes. Larger networks capture longer patterns (lower 4- and 5-gram TV), but their bigram TV gets worse. When data are scarce they also copy the training data more and sit closer to it. Two layers bring no gain. No configuration beats the light order-2 model on fidelity and disclosure together. We did not tune the LSTM (no search over the learning rate, no dropout, no early stopping), so the results hold for this setup.
 
 \begin{table}[!t]
 \caption{RQ3 on Paris-OSM: LSTM capacity scale against the light order-2 Markov (mean $\pm$ 95\% CI over 20 paired replicates). Near-copy: \% of 200 synthetic sequences with MUITAS $\ge 0.95$.}
