@@ -1,0 +1,119 @@
+\begin{table}[!t]
+\caption{RQ3 on Paris-OSM: LSTM capacity scale against the light order-2 Markov (mean $\pm$ 95\% CI over 20 paired replicates; all other settings as in Table~\ref{tab:order2}). Near-copy: \% of 200 synthetic sequences with MUITAS $\ge 0.95$. Lower TV and near-copy, higher $\Delta$DCR, are better.}
+\label{tab:capacity}
+\centering\scriptsize
+\begin{tabular}{l cccc cccc}
+\toprule
+ & \multicolumn{4}{c}{$n{=}20$} & \multicolumn{4}{c}{$n{=}581$} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+generator & TV$_3$ & TV$_5$ & near-copy & $\Delta$DCR & TV$_3$ & TV$_5$ & near-copy & $\Delta$DCR \\
+\midrule
+LSTM, hidden 64 (original) & 0.691$\pm$0.014 & 0.923$\pm$0.015 & 3.50$\pm$1.33 & $-$0.093$\pm$0.020 & 0.524$\pm$0.003 & 0.861$\pm$0.003 & 0.10$\pm$0.12 & 0.070$\pm$0.006 \\
+LSTM, hidden 128 & 0.681$\pm$0.015 & 0.900$\pm$0.019 & 20.88$\pm$3.73 & $-$0.148$\pm$0.024 & 0.517$\pm$0.004 & 0.842$\pm$0.003 & 0.12$\pm$0.10 & 0.060$\pm$0.006 \\
+LSTM, hidden 256 & 0.677$\pm$0.016 & 0.893$\pm$0.019 & 34.65$\pm$4.32 & $-$0.176$\pm$0.022 & 0.526$\pm$0.009 & 0.835$\pm$0.003 & 0.50$\pm$0.20 & 0.045$\pm$0.006 \\
+LSTM, 2 layers (hidden 64) & 0.704$\pm$0.014 & 0.928$\pm$0.014 & 3.95$\pm$1.46 & $-$0.094$\pm$0.020 & 0.542$\pm$0.004 & 0.880$\pm$0.003 & 0.07$\pm$0.09 & 0.073$\pm$0.006 \\
+Markov-2 (light) & 0.661$\pm$0.017 & 0.911$\pm$0.020 & 0.80$\pm$0.61 & $-$0.029$\pm$0.020 & 0.496$\pm$0.003 & 0.817$\pm$0.003 & 0.35$\pm$0.19 & 0.100$\pm$0.007 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{RQ3: $n$-gram fidelity up to order 5}
+\label{supp:rq3-ngrams}
+Table~\ref{tab:supp-rq3-ngrams} reports the TV between the real and the synthetic $n$-gram distributions in the common OSM-label space for orders 1--5, for the order-1 Markov, the order-2 Markov (light and heavy back-off), the original LSTM, and the real-vs-real floor (two disjoint halves of the real sample). The synthetic sequences are regenerated with the seeds of the original RQ3 runs; the LSTM and order-2 rows reproduce the values of Tables~\ref{tab:supp-order2-full} exactly. Table~\ref{tab:supp-rq3-ngrams-paired} gives the paired differences between each order-2 variant and the LSTM (negative: the order-2 model is better).
+
+\begin{table}[!t]
+\caption{$n$-gram TV in the common OSM-label space on Paris-OSM (mean $\pm$ 95\% CI over 20 paired replicates; lower is better). Floor: two disjoint halves of the real sample.}
+\label{tab:supp-rq3-ngrams}
+\centering\small
+\begin{tabular}{llccccc}
+\toprule
+$n$ & generator & order 1 & order 2 & order 3 & order 4 & order 5 \\
+\midrule
+20 & Markov-1 & 0.197$\pm$0.009 & 0.423$\pm$0.015 & 0.710$\pm$0.018 & 0.894$\pm$0.017 & 0.968$\pm$0.010 \\
+ & Markov-2 (light) & 0.206$\pm$0.011 & 0.437$\pm$0.014 & 0.661$\pm$0.017 & 0.825$\pm$0.021 & 0.911$\pm$0.020 \\
+ & Markov-2 (heavy) & 0.198$\pm$0.009 & 0.428$\pm$0.015 & 0.686$\pm$0.018 & 0.867$\pm$0.020 & 0.947$\pm$0.015 \\
+ & LSTM & 0.258$\pm$0.014 & 0.483$\pm$0.014 & 0.691$\pm$0.014 & 0.845$\pm$0.017 & 0.923$\pm$0.015 \\
+ & real-vs-real floor & 0.276$\pm$0.030 & 0.583$\pm$0.026 & 0.811$\pm$0.033 & 0.913$\pm$0.030 & 0.946$\pm$0.028 \\
+\midrule
+100 & Markov-1 & 0.123$\pm$0.009 & 0.302$\pm$0.010 & 0.613$\pm$0.010 & 0.848$\pm$0.008 & 0.955$\pm$0.005 \\
+ & Markov-2 (light) & 0.155$\pm$0.009 & 0.329$\pm$0.011 & 0.549$\pm$0.011 & 0.747$\pm$0.013 & 0.869$\pm$0.012 \\
+ & Markov-2 (heavy) & 0.130$\pm$0.010 & 0.310$\pm$0.010 & 0.594$\pm$0.011 & 0.821$\pm$0.011 & 0.934$\pm$0.008 \\
+ & LSTM & 0.195$\pm$0.012 & 0.363$\pm$0.014 & 0.569$\pm$0.012 & 0.763$\pm$0.011 & 0.880$\pm$0.010 \\
+ & real-vs-real floor & 0.133$\pm$0.013 & 0.337$\pm$0.016 & 0.586$\pm$0.019 & 0.764$\pm$0.019 & 0.852$\pm$0.018 \\
+\midrule
+581 & Markov-1 & 0.100$\pm$0.002 & 0.274$\pm$0.003 & 0.571$\pm$0.003 & 0.807$\pm$0.003 & 0.931$\pm$0.002 \\
+ & Markov-2 (light) & 0.133$\pm$0.004 & 0.300$\pm$0.003 & 0.496$\pm$0.003 & 0.687$\pm$0.003 & 0.817$\pm$0.003 \\
+ & Markov-2 (heavy) & 0.105$\pm$0.002 & 0.282$\pm$0.003 & 0.537$\pm$0.003 & 0.760$\pm$0.003 & 0.889$\pm$0.002 \\
+ & LSTM & 0.161$\pm$0.006 & 0.314$\pm$0.006 & 0.524$\pm$0.003 & 0.731$\pm$0.003 & 0.861$\pm$0.003 \\
+ & real-vs-real floor & 0.058$\pm$0.004 & 0.166$\pm$0.004 & 0.329$\pm$0.005 & 0.504$\pm$0.005 & 0.628$\pm$0.006 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[!t]
+\caption{Paired differences in $n$-gram TV, order-2 variant minus LSTM (mean over 20 paired replicates; negative favours the order-2 model). Stars: paired Wilcoxon $^{*}p{<}0.05$, $^{**}p{<}0.01$, $^{***}p{<}0.001$.}
+\label{tab:supp-rq3-ngrams-paired}
+\centering\small
+\begin{tabular}{llcccc}
+\toprule
+variant & $n$ & order 2 & order 3 & order 4 & order 5 \\
+\midrule
+Markov-2 (light) & 20 & $-$0.046$^{***}$ & $-$0.030$^{***}$ & $-$0.020$^{***}$ & $-$0.012 \\
+ & 50 & $-$0.041$^{***}$ & $-$0.025$^{***}$ & $-$0.013$^{**}$ & $-$0.005 \\
+ & 100 & $-$0.034$^{***}$ & $-$0.020$^{***}$ & $-$0.016$^{***}$ & $-$0.011$^{***}$ \\
+ & 300 & $-$0.020$^{***}$ & $-$0.024$^{***}$ & $-$0.034$^{***}$ & $-$0.031$^{***}$ \\
+ & 581 & $-$0.014$^{***}$ & $-$0.027$^{***}$ & $-$0.044$^{***}$ & $-$0.044$^{***}$ \\
+\midrule
+Markov-2 (heavy) & 20 & $-$0.056$^{***}$ & $-$0.005 & 0.022$^{***}$ & 0.024$^{***}$ \\
+ & 50 & $-$0.057$^{***}$ & 0.014$^{**}$ & 0.049$^{***}$ & 0.048$^{***}$ \\
+ & 100 & $-$0.053$^{***}$ & 0.025$^{***}$ & 0.058$^{***}$ & 0.054$^{***}$ \\
+ & 300 & $-$0.044$^{***}$ & 0.020$^{***}$ & 0.043$^{***}$ & 0.042$^{***}$ \\
+ & 581 & $-$0.032$^{***}$ & 0.014$^{***}$ & 0.029$^{***}$ & 0.028$^{***}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{RQ3: LSTM capacity scale}
+\label{supp:rq3-capacity}
+To check that the LSTM comparison does not depend on a single small network, we widen the LSTM (hidden size 128 and 256, one layer) and deepen it (two layers of size 64), keeping embedding size 32, the optimiser (Adam, learning rate $5\times10^{-3}$), the 120 full-batch epochs, the vocabulary, the nested samples and the seeds of RQ3 fixed. Table~\ref{tab:supp-capacity} reports all five sample sizes. Larger networks lower the 4- and 5-gram TV but raise the bigram TV and, above all, the near-copy rate and the proximity to the training records when data are scarce; two layers bring no gain. No configuration matches the light order-2 Markov on fidelity and disclosure together. These results hold for the LSTM family and the fixed training protocol used here; no hyperparameter search, dropout or early stopping was tried.
+
+\begin{table}[!t]
+\caption{RQ3 on Paris-OSM: LSTM capacity scale against the light order-2 Markov (mean $\pm$ 95\% CI over 20 paired replicates). Near-copy: \% of 200 synthetic sequences with MUITAS $\ge 0.95$.}
+\label{tab:supp-capacity}
+\centering\scriptsize
+\begin{tabular}{llccccc}
+\toprule
+$n$ & generator & TV$_2$ & TV$_3$ & TV$_5$ & near-copy \% & $\Delta$DCR \\
+\midrule
+20 & LSTM, hidden 64 (original) & 0.483$\pm$0.014 & 0.691$\pm$0.014 & 0.923$\pm$0.015 & 3.50$\pm$1.33 & $-$0.093$\pm$0.020 \\
+ & LSTM, hidden 128 & 0.486$\pm$0.013 & 0.681$\pm$0.015 & 0.900$\pm$0.019 & 20.88$\pm$3.73 & $-$0.148$\pm$0.024 \\
+ & LSTM, hidden 256 & 0.484$\pm$0.013 & 0.677$\pm$0.016 & 0.893$\pm$0.019 & 34.65$\pm$4.32 & $-$0.176$\pm$0.022 \\
+ & LSTM, 2 layers (hidden 64) & 0.493$\pm$0.012 & 0.704$\pm$0.014 & 0.928$\pm$0.014 & 3.95$\pm$1.46 & $-$0.094$\pm$0.020 \\
+ & Markov-2 (light) & 0.437$\pm$0.014 & 0.661$\pm$0.017 & 0.911$\pm$0.020 & 0.80$\pm$0.61 & $-$0.029$\pm$0.020 \\
+\midrule
+50 & LSTM, hidden 64 (original) & 0.396$\pm$0.013 & 0.610$\pm$0.011 & 0.895$\pm$0.011 & 0.50$\pm$0.39 & $-$0.013$\pm$0.010 \\
+ & LSTM, hidden 128 & 0.414$\pm$0.016 & 0.613$\pm$0.013 & 0.886$\pm$0.012 & 1.98$\pm$0.75 & $-$0.044$\pm$0.011 \\
+ & LSTM, hidden 256 & 0.403$\pm$0.014 & 0.596$\pm$0.010 & 0.860$\pm$0.013 & 17.02$\pm$2.38 & $-$0.107$\pm$0.011 \\
+ & LSTM, 2 layers (hidden 64) & 0.392$\pm$0.018 & 0.615$\pm$0.014 & 0.905$\pm$0.010 & 0.35$\pm$0.46 & $-$0.011$\pm$0.012 \\
+ & Markov-2 (light) & 0.354$\pm$0.012 & 0.585$\pm$0.012 & 0.890$\pm$0.012 & 0.30$\pm$0.29 & 0.039$\pm$0.012 \\
+\midrule
+100 & LSTM, hidden 64 (original) & 0.363$\pm$0.014 & 0.569$\pm$0.012 & 0.880$\pm$0.010 & 0.33$\pm$0.32 & 0.029$\pm$0.008 \\
+ & LSTM, hidden 128 & 0.388$\pm$0.013 & 0.575$\pm$0.011 & 0.871$\pm$0.011 & 0.35$\pm$0.20 & 0.007$\pm$0.008 \\
+ & LSTM, hidden 256 & 0.412$\pm$0.017 & 0.583$\pm$0.013 & 0.859$\pm$0.011 & 3.48$\pm$0.81 & $-$0.029$\pm$0.007 \\
+ & LSTM, 2 layers (hidden 64) & 0.363$\pm$0.014 & 0.580$\pm$0.012 & 0.894$\pm$0.008 & 0.20$\pm$0.22 & 0.032$\pm$0.008 \\
+ & Markov-2 (light) & 0.329$\pm$0.011 & 0.549$\pm$0.011 & 0.869$\pm$0.012 & 0.33$\pm$0.32 & 0.076$\pm$0.009 \\
+\midrule
+300 & LSTM, hidden 64 (original) & 0.327$\pm$0.007 & 0.533$\pm$0.005 & 0.863$\pm$0.003 & 0.17$\pm$0.14 & 0.067$\pm$0.008 \\
+ & LSTM, hidden 128 & 0.344$\pm$0.010 & 0.529$\pm$0.007 & 0.846$\pm$0.005 & 0.20$\pm$0.18 & 0.054$\pm$0.008 \\
+ & LSTM, hidden 256 & 0.367$\pm$0.009 & 0.537$\pm$0.008 & 0.836$\pm$0.004 & 1.45$\pm$0.49 & 0.029$\pm$0.008 \\
+ & LSTM, 2 layers (hidden 64) & 0.330$\pm$0.011 & 0.547$\pm$0.007 & 0.878$\pm$0.004 & 0.17$\pm$0.16 & 0.073$\pm$0.006 \\
+ & Markov-2 (light) & 0.307$\pm$0.008 & 0.509$\pm$0.007 & 0.831$\pm$0.006 & 0.25$\pm$0.19 & 0.105$\pm$0.008 \\
+\midrule
+581 & LSTM, hidden 64 (original) & 0.314$\pm$0.006 & 0.524$\pm$0.003 & 0.861$\pm$0.003 & 0.10$\pm$0.12 & 0.070$\pm$0.006 \\
+ & LSTM, hidden 128 & 0.330$\pm$0.006 & 0.517$\pm$0.004 & 0.842$\pm$0.003 & 0.12$\pm$0.10 & 0.060$\pm$0.006 \\
+ & LSTM, hidden 256 & 0.353$\pm$0.012 & 0.526$\pm$0.009 & 0.835$\pm$0.003 & 0.50$\pm$0.20 & 0.045$\pm$0.006 \\
+ & LSTM, 2 layers (hidden 64) & 0.315$\pm$0.006 & 0.542$\pm$0.004 & 0.880$\pm$0.003 & 0.07$\pm$0.09 & 0.073$\pm$0.006 \\
+ & Markov-2 (light) & 0.300$\pm$0.003 & 0.496$\pm$0.003 & 0.817$\pm$0.003 & 0.35$\pm$0.19 & 0.100$\pm$0.007 \\
+\bottomrule
+\end{tabular}
+\end{table}
